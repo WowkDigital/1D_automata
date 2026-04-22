@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automata. | 1D Cellular Automata</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                            950: '#042f2e',
+                        },
+                        surface: {
+                            50: '#fafafa',
+                            100: '#f5f5f5',
+                            200: '#e5e5e5',
+                            300: '#d4d4d4',
+                            400: '#a3a3a3',
+                            500: '#737373',
+                            600: '#525252',
+                            700: '#404040',
+                            800: '#262626',
+                            900: '#171717',
+                            950: '#0a0a0a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Glassmorphism effects */
+        .glass-panel {
+            background: rgba(23, 23, 23, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(20, 184, 166, 0.2);
+        }
+
+        /* Input styling */
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #14b8a6;
+            cursor: pointer;
+            margin-top: -5px;
+            box-shadow: 0 0 10px rgba(20, 184, 166, 0.4);
+            border: 2px solid white;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Grid Background Overlay */
+        .bg-grid {
+            background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Button Hover Glow */
+        .btn-glow:hover {
+            box-shadow: 0 0 20px rgba(20, 184, 166, 0.3);
+        }
+    </style>
+</head>
+
+<body class="bg-surface-950 text-surface-200 font-sans h-screen w-screen overflow-hidden flex flex-col md:flex-row">
+
+    <!-- Ambient Background -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div class="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-brand-500/10 blur-[120px] rounded-full animate-pulse-slow"></div>
+        <div class="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-purple-500/5 blur-[120px] rounded-full animate-pulse-slow" style="animation-delay: 2s"></div>
+        <div class="absolute inset-0 bg-grid"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="w-full md:w-80 lg:w-96 h-auto md:h-full glass-panel z-10 flex flex-col shadow-2xl relative border-r border-white/5">
+        <div class="p-8 flex flex-col gap-8 overflow-y-auto h-full scroll-smooth">
+            
+            <!-- Logo & Brand -->
+            <div class="flex items-center gap-4 group">
+                <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:scale-110 transition-transform duration-300">
+                    <i data-lucide="grid-3x3" class="text-white w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-tight leading-none">Automata<span class="text-brand-500">.</span></h1>
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-surface-500 font-semibold mt-1">1D Cellular Evolution</p>
+                </div>
+            </div>
+
+            <!-- Main Controls Group -->
+            <div class="space-y-6">
+                
+                <!-- Rule Input Section -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-semibold text-surface-400 uppercase tracking-wider">Rule Configuration</label>
+                        <span id="ruleDisplay" class="text-[10px] font-mono bg-brand-500/10 text-brand-400 px-2 py-0.5 rounded-full border border-brand-500/20">Rule 30</span>
+                    </div>
+                    
+                    <div class="flex flex-col gap-3">
+                        <div class="relative">
+                            <input type="number" id="ruleInput" min="0" max="255" value="30"
+                                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all font-mono text-lg text-center appearance-none">
+                            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-surface-500">
+                                <i data-lucide="hash" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="relative">
+                            <select id="presetRules"
+                                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-surface-300 focus:outline-none focus:border-brand-500 transition-all cursor-pointer appearance-none text-sm">
+                                <option value="30" class="bg-surface-900">Choose Preset...</option>
+                                <option value="30" class="bg-surface-900">Rule 30 (Chaos)</option>
+                                <option value="90" class="bg-surface-900">Rule 90 (Sierpinski)</option>
+                                <option value="110" class="bg-surface-900">Rule 110 (Turing)</option>
+                                <option value="184" class="bg-surface-900">Rule 184 (Traffic)</option>
+                                <option value="54" class="bg-surface-900">Rule 54</option>
+                                <option value="225" class="bg-surface-900">Rule 225</option>
+                            </select>
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 pointer-events-none">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization Card -->
+                <div class="glass-card p-4 rounded-2xl">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="binary" class="w-3 h-3 text-brand-500"></i>
+                        <h3 class="text-[10px] font-semibold text-surface-400 uppercase tracking-widest">Neighborhood Logic</h3>
+                    </div>
+                    <div class="flex justify-between gap-1" id="ruleVisualizer">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Playback Controls -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="btnPlay"
+                        class="col-span-1 bg-brand-500 hover:bg-brand-400 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 btn-glow shadow-lg shadow-brand-500/20 active:scale-95">
+                        <i data-lucide="play" class="w-4 h-4 fill-current"></i> <span>Play</span>
+                    </button>
+                    <button id="btnStep"
+                        class="col-span-1 bg-white/5 hover:bg-white/10 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-white/10 active:scale-95">
+                        <i data-lucide="skip-forward" class="w-4 h-4"></i> <span>Step</span>
+                    </button>
+                    <button id="btnReset"
+                        class="col-span-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-red-500/20 active:scale-95">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> <span>Reset Evolution</span>
+                    </button>
+                </div>
+
+                <!-- Separator -->
+                <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+
+                <!-- Simulation Settings -->
+                <div class="space-y-6">
+                    <!-- Speed -->
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="zap" class="w-3.5 h-3.5 text-brand-500"></i>
+                                <label class="text-xs font-medium text-surface-300">Tempo</label>
+                            </div>
+                            <span id="speedDisplay" class="text-[10px] font-mono text-surface-500">Max</span>
+                        </div>
+                        <input type="range" id="speedSlider" min="1" max="60" value="60">
+                    </div>
+
+                    <!-- Cell Size -->
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="maximize" class="w-3.5 h-3.5 text-brand-500"></i>
+                                <label class="text-xs font-medium text-surface-300">Resolution</label>
+                            </div>
+                            <span id="sizeDisplay" class="text-[10px] font-mono text-surface-500">4px</span>
+                        </div>
+                        <input type="range" id="sizeSlider" min="1" max="20" value="4">
+                    </div>
+
+                    <!-- Initial State -->
+                    <div class="space-y-3">
+                        <label class="text-xs font-medium text-surface-300 flex items-center gap-2">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand-500"></i>
+                            Seed Mode
+                        </label>
+                        <div class="flex p-1 bg-white/5 rounded-xl border border-white/5">
+                            <button id="initCenter"
+                                class="flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 bg-white/10 text-white shadow-sm">
+                                Centered
+                            </button>
+                            <button id="initRandom"
+                                class="flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 text-surface-500 hover:text-white">
+                                Entropy
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Appearance -->
+                    <div class="space-y-4">
+                        <label class="text-xs font-medium text-surface-300 flex items-center gap-2">
+                            <i data-lucide="palette" class="w-3.5 h-3.5 text-brand-500"></i>
+                            Chroma
+                        </label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="flex items-center gap-3 p-2 bg-white/5 rounded-xl border border-white/5">
+                                <input type="color" id="colorAlive" value="#14b8a6"
+                                    class="w-6 h-6 rounded cursor-pointer bg-transparent">
+                                <span class="text-[10px] text-surface-500 font-medium uppercase tracking-tighter">Active</span>
+                            </div>
+                            <div class="flex items-center gap-3 p-2 bg-white/5 rounded-xl border border-white/5">
+                                <input type="color" id="colorDead" value="#0a0a0a"
+                                    class="w-6 h-6 rounded cursor-pointer bg-transparent">
+                                <span class="text-[10px] text-surface-500 font-medium uppercase tracking-tighter">Void</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer/Info -->
+            <div class="mt-auto pt-8 text-[10px] text-surface-600 flex justify-between items-center">
+                <span>V 2.0.4 Premium</span>
+                <div class="flex gap-2">
+                    <a href="#" class="hover:text-brand-500 transition-colors"><i data-lucide="github" class="w-3 h-3"></i></a>
+                    <a href="#" class="hover:text-brand-500 transition-colors"><i data-lucide="info" class="w-3 h-3"></i></a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 relative flex items-center justify-center p-4 md:p-12 overflow-hidden z-0" id="canvasContainer">
+        <div class="absolute top-8 right-8 flex items-center gap-4 text-[10px] font-mono text-surface-500 fade-in z-20">
+            <div class="flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
+                LIVE RENDER
+            </div>
+            <div class="w-px h-3 bg-white/10"></div>
+            <div id="statsDisplay">GEN: 0</div>
+        </div>
+
+        <!-- Canvas Container with Glow -->
+        <div class="relative group">
+            <div class="absolute -inset-1 bg-gradient-to-r from-brand-500 to-purple-500 rounded blur opacity-20 group-hover:opacity-30 transition duration-1000 group-hover:duration-200"></div>
+            <canvas id="caCanvas"
+                class="relative shadow-2xl rounded-lg border border-white/10 bg-surface-950 max-w-full max-h-full transition-all duration-500 ring-1 ring-white/5"></canvas>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // --- Core Application Logic (Preserved and slightly updated for UI elements) ---
+        class CellularAutomata {
+            constructor() {
+                // DOM Elements
+                this.canvas = document.getElementById('caCanvas');
+                this.ctx = this.canvas.getContext('2d', { alpha: false });
+                this.container = document.getElementById('canvasContainer');
+
+                this.ruleInput = document.getElementById('ruleInput');
+                this.presetRules = document.getElementById('presetRules');
+                this.ruleDisplay = document.getElementById('ruleDisplay');
+                this.statsDisplay = document.getElementById('statsDisplay');
+
+                this.btnPlay = document.getElementById('btnPlay');
+                this.btnStep = document.getElementById('btnStep');
+                this.btnReset = document.getElementById('btnReset');
+
+                this.speedSlider = document.getElementById('speedSlider');
+                this.speedDisplay = document.getElementById('speedDisplay');
+                this.sizeSlider = document.getElementById('sizeSlider');
+                this.sizeDisplay = document.getElementById('sizeDisplay');
+
+                this.initCenterBtn = document.getElementById('initCenter');
+                this.initRandomBtn = document.getElementById('initRandom');
+
+                this.colorAliveInput = document.getElementById('colorAlive');
+                this.colorDeadInput = document.getElementById('colorDead');
+
+                this.ruleVisualizer = document.getElementById('ruleVisualizer');
+
+                // State
+                this.rule = 30;
+                this.ruleTable = new Uint8Array(8);
+                this.cellSize = parseInt(this.sizeSlider.value);
+                this.speed = parseInt(this.speedSlider.value);
+                this.cols = 0;
+                this.rows = 0;
+                this.grid = []; 
+                this.gridPointer = 0;
+                this.totalGenerations = 0;
+                this.isRunning = false;
+                this.initialMode = 'center';
+
+                this.colorAlive = this.colorAliveInput.value;
+                this.colorDead = this.colorDeadInput.value;
+
+                this.lastFrameTime = 0;
+                this.frameAccumulator = 0;
+                this.animationReq = null;
+
+                // Initialization
+                this.bindEvents();
+                this.setRule(this.rule);
+                this.resizeAndReset();
+            }
+
+            bindEvents() {
+                this.ruleInput.addEventListener('input', (e) => {
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val)) return;
+                    val = Math.max(0, Math.min(255, val));
+                    this.setRule(val);
+                });
+
+                this.presetRules.addEventListener('change', (e) => {
+                    if (e.target.value) {
+                        const val = parseInt(e.target.value);
+                        this.setRule(val);
+                        this.ruleInput.value = val;
+                    }
+                });
+
+                this.btnPlay.addEventListener('click', () => this.togglePlay());
+                this.btnStep.addEventListener('click', () => {
+                    this.pause();
+                    this.generateNextRow();
+                    this.draw();
+                });
+                this.btnReset.addEventListener('click', () => {
+                    this.pause();
+                    this.resizeAndReset();
+                });
+
+                this.speedSlider.addEventListener('input', (e) => {
+                    this.speed = parseInt(e.target.value);
+                    this.speedDisplay.textContent = this.speed === 60 ? 'Max' : `${this.speed} fps`;
+                });
+
+                this.sizeSlider.addEventListener('change', (e) => {
+                    this.cellSize = parseInt(e.target.value);
+                    this.sizeDisplay.textContent = `${this.cellSize}px`;
+                    this.pause();
+                    this.resizeAndReset();
+                });
+
+                this.colorAliveInput.addEventListener('input', (e) => {
+                    this.colorAlive = e.target.value;
+                    this.updateRuleVisualizer();
+                    this.draw();
+                });
+
+                this.colorDeadInput.addEventListener('input', (e) => {
+                    this.colorDead = e.target.value;
+                    this.updateRuleVisualizer();
+                    this.draw();
+                });
+
+                this.initCenterBtn.addEventListener('click', () => {
+                    this.initialMode = 'center';
+                    this.initCenterBtn.className = "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 bg-white/10 text-white shadow-sm";
+                    this.initRandomBtn.className = "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 text-surface-500 hover:text-white";
+                    this.pause();
+                    this.resizeAndReset();
+                });
+
+                this.initRandomBtn.addEventListener('click', () => {
+                    this.initialMode = 'random';
+                    this.initRandomBtn.className = "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 bg-white/10 text-white shadow-sm";
+                    this.initCenterBtn.className = "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 text-surface-500 hover:text-white";
+                    this.pause();
+                    this.resizeAndReset();
+                });
+
+                window.addEventListener('resize', () => {
+                    clearTimeout(this.resizeTimeout);
+                    this.resizeTimeout = setTimeout(() => {
+                        this.pause();
+                        this.resizeAndReset();
+                    }, 200);
+                });
+            }
+
+            setRule(ruleNumber) {
+                this.rule = ruleNumber;
+                this.ruleDisplay.textContent = `Rule ${this.rule}`;
+                for (let i = 0; i < 8; i++) {
+                    this.ruleTable[i] = (this.rule >> i) & 1;
+                }
+                this.updateRuleVisualizer();
+            }
+
+            updateRuleVisualizer() {
+                this.ruleVisualizer.innerHTML = '';
+                for (let i = 7; i >= 0; i--) {
+                    const left = (i >> 2) & 1;
+                    const center = (i >> 1) & 1;
+                    const right = i & 1;
+                    const result = (this.rule >> i) & 1;
+
+                    const col = document.createElement('div');
+                    col.className = 'flex flex-col items-center gap-1.5 flex-1 max-w-[28px]';
+
+                    const topRow = document.createElement('div');
+                    topRow.className = 'flex gap-[1px]';
+
+                    [left, center, right].forEach(val => {
+                        const cell = document.createElement('div');
+                        cell.className = 'w-1.5 h-1.5 rounded-[1px]';
+                        cell.style.backgroundColor = val ? this.colorAlive : 'transparent';
+                        cell.style.border = val ? 'none' : '1px solid rgba(255,255,255,0.1)';
+                        topRow.appendChild(cell);
+                    });
+
+                    const resCell = document.createElement('div');
+                    resCell.className = 'w-1.5 h-1.5 rounded-[1px] mt-0.5';
+                    resCell.style.backgroundColor = result ? this.colorAlive : 'transparent';
+                    resCell.style.border = result ? 'none' : '1px solid rgba(255,255,255,0.1)';
+
+                    col.appendChild(topRow);
+                    col.appendChild(resCell);
+                    this.ruleVisualizer.appendChild(col);
+                }
+            }
+
+            resizeAndReset() {
+                const rect = this.container.getBoundingClientRect();
+                const padding = window.innerWidth < 768 ? 32 : 96;
+
+                let canvasW = rect.width - padding;
+                let canvasH = rect.height - padding;
+
+                this.cols = Math.floor(canvasW / this.cellSize);
+                this.rows = Math.floor(canvasH / this.cellSize);
+
+                this.canvas.width = this.cols * this.cellSize;
+                this.canvas.height = this.rows * this.cellSize;
+
+                this.resetGrid();
+                this.draw();
+            }
+
+            resetGrid() {
+                this.grid = Array.from({ length: this.rows }, () => new Uint8Array(this.cols));
+                this.gridPointer = 0;
+                this.totalGenerations = 0;
+
+                const firstRow = this.grid[0];
+                if (this.initialMode === 'center') {
+                    firstRow[Math.floor(this.cols / 2)] = 1;
+                } else {
+                    for (let i = 0; i < this.cols; i++) {
+                        firstRow[i] = Math.random() > 0.5 ? 1 : 0;
+                    }
+                }
+                this.totalGenerations = 1;
+                this.updateStats();
+            }
+
+            updateStats() {
+                this.statsDisplay.textContent = `GEN: ${this.totalGenerations}`;
+            }
+
+            generateNextRow() {
+                const prevRow = this.grid[this.gridPointer];
+                this.gridPointer = (this.gridPointer + 1) % this.rows;
+                const nextRow = this.grid[this.gridPointer];
+
+                const cols = this.cols;
+                const ruleTable = this.ruleTable;
+
+                let left = prevRow[cols - 1];
+                let center = prevRow[0];
+                let right = prevRow[1];
+                nextRow[0] = ruleTable[(left << 2) | (center << 1) | right];
+
+                for (let i = 1; i < cols - 1; i++) {
+                    left = center;
+                    center = right;
+                    right = prevRow[i + 1];
+                    nextRow[i] = ruleTable[(left << 2) | (center << 1) | right];
+                }
+
+                left = center;
+                center = right;
+                right = prevRow[0];
+                nextRow[cols - 1] = ruleTable[(left << 2) | (center << 1) | right];
+
+                this.totalGenerations++;
+                this.updateStats();
+            }
+
+            drawRow(row, y) {
+                const cellSize = this.cellSize;
+                const cols = this.cols;
+                this.ctx.fillStyle = this.colorAlive;
+                this.ctx.beginPath();
+                
+                let xStart = -1;
+                for (let x = 0; x < cols; x++) {
+                    if (row[x] === 1) {
+                        if (xStart === -1) xStart = x;
+                    } else if (xStart !== -1) {
+                        this.ctx.rect(xStart * cellSize, y * cellSize, (x - xStart) * cellSize, cellSize);
+                        xStart = -1;
+                    }
+                }
+                if (xStart !== -1) {
+                    this.ctx.rect(xStart * cellSize, y * cellSize, (cols - xStart) * cellSize, cellSize);
+                }
+                this.ctx.fill();
+            }
+
+            draw() {
+                this.ctx.fillStyle = this.colorDead;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                const currentHistoryCount = Math.min(this.totalGenerations, this.rows);
+                const startPointer = (this.gridPointer - currentHistoryCount + 1 + this.rows) % this.rows;
+
+                for (let i = 0; i < currentHistoryCount; i++) {
+                    const idx = (startPointer + i) % this.rows;
+                    this.drawRow(this.grid[idx], i);
+                }
+            }
+
+            togglePlay() {
+                if (this.isRunning) {
+                    this.pause();
+                } else {
+                    this.play();
+                }
+            }
+
+            play() {
+                this.isRunning = true;
+                this.btnPlay.innerHTML = '<i data-lucide="pause" class="w-4 h-4 fill-current"></i> <span>Pause</span>';
+                this.btnPlay.classList.replace('bg-brand-500', 'bg-amber-500');
+                this.btnPlay.classList.replace('hover:bg-brand-400', 'hover:bg-amber-400');
+                lucide.createIcons();
+                this.lastFrameTime = performance.now();
+                this.animationReq = requestAnimationFrame((t) => this.loop(t));
+            }
+
+            pause() {
+                this.isRunning = false;
+                this.btnPlay.innerHTML = '<i data-lucide="play" class="w-4 h-4 fill-current"></i> <span>Play</span>';
+                this.btnPlay.classList.replace('bg-amber-500', 'bg-brand-500');
+                this.btnPlay.classList.replace('hover:bg-amber-400', 'hover:bg-brand-400');
+                lucide.createIcons();
+                if (this.animationReq) cancelAnimationFrame(this.animationReq);
+            }
+
+            loop(timestamp) {
+                if (!this.isRunning) return;
+
+                const deltaTime = timestamp - this.lastFrameTime;
+                this.lastFrameTime = timestamp;
+
+                const timePerFrame = 1000 / this.speed;
+                this.frameAccumulator += deltaTime;
+
+                let iterations = 0;
+                while (this.frameAccumulator >= timePerFrame && iterations < 10) {
+                    this.generateNextRow();
+                    const nextRow = this.grid[this.gridPointer];
+                    const cellSize = this.cellSize;
+                    
+                    if (this.totalGenerations <= this.rows) {
+                        this.drawRow(nextRow, this.totalGenerations - 1);
+                    } else {
+                        this.ctx.drawImage(this.canvas, 0, cellSize, this.canvas.width, this.canvas.height - cellSize, 0, 0, this.canvas.width, this.canvas.height - cellSize);
+                        this.ctx.fillStyle = this.colorDead;
+                        this.ctx.fillRect(0, this.canvas.height - cellSize, this.canvas.width, cellSize);
+                        this.drawRow(nextRow, this.rows - 1);
+                    }
+                    this.frameAccumulator -= timePerFrame;
+                    iterations++;
+                }
+
+                if (this.isRunning) {
+                    this.animationReq = requestAnimationFrame((t) => this.loop(t));
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.caApp = new CellularAutomata();
+        });
+    </script>
+</body>
+
+</html>
