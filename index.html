@@ -359,10 +359,18 @@
 
                     <!-- Initial State -->
                     <div class="space-y-3">
-                        <label class="text-xs font-medium text-surface-300 flex items-center gap-2">
-                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand-500"></i>
-                            Seed Mode
-                        </label>
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-medium text-surface-300 flex items-center gap-2">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand-500"></i>
+                                Seed Mode
+                            </label>
+                            <!-- Instant Fill Toggle -->
+                            <label class="flex items-center gap-2 cursor-pointer group" title="Fill entire screen instantly">
+                                <span class="text-[10px] text-surface-500 group-hover:text-surface-400 transition-colors">Instant</span>
+                                <input type="checkbox" id="instantFillToggle" class="hidden peer">
+                                <div class="w-7 h-4 bg-white/10 rounded-full peer-checked:bg-brand-500 transition-all relative after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:after:translate-x-3"></div>
+                            </label>
+                        </div>
                         <div class="flex p-1 bg-white/5 rounded-xl border border-white/5">
                             <button id="initCenter"
                                 class="flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 bg-white/10 text-white shadow-sm" title="Single pixel in the center">
@@ -470,6 +478,7 @@
                 this.entropyGuardOnBtn = document.getElementById('entropyGuardOn');
                 this.modeScrollBtn = document.getElementById('modeScroll');
                 this.modeScanBtn = document.getElementById('modeScan');
+                this.instantFillToggle = document.getElementById('instantFillToggle');
 
                 // State
                 this.radius = 1;
@@ -481,6 +490,7 @@
                 this.resetOnRuleChange = false;
                 this.entropyGuardEnabled = false;
                 this.isScanMode = false;
+                this.instantFill = false;
                 this.cols = 0;
                 this.rows = 0;
                 this.grid = []; 
@@ -579,6 +589,10 @@
                     this.draw();
                 });
 
+                this.instantFillToggle.addEventListener('change', (e) => {
+                    this.instantFill = e.target.checked;
+                });
+
                 this.btnPlay.addEventListener('click', () => this.togglePlay());
                 this.btnStep.addEventListener('click', () => {
                     this.pause();
@@ -620,6 +634,7 @@
                     this.initRandomBtn.className = "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 text-surface-500 hover:text-white";
                     this.pause();
                     this.resizeAndReset();
+                    if (this.instantFill) this.fillScreen();
                 });
 
                 this.initRandomBtn.addEventListener('click', () => {
@@ -628,7 +643,7 @@
                     this.initCenterBtn.className = "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 text-surface-500 hover:text-white";
                     this.pause();
                     this.resizeAndReset();
-                    this.fillScreen();
+                    if (this.instantFill) this.fillScreen();
                 });
 
                 window.addEventListener('resize', () => {
