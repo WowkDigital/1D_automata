@@ -28,7 +28,6 @@ class CellularAutomata {
         this.ruleVisualizer = document.getElementById('ruleVisualizer');
         this.btnRandomRule = document.getElementById('btnRandomRule');
         this.resetOnChangeToggle = document.getElementById('resetOnChange');
-        this.advancedToggle = document.getElementById('advancedToggle');
         this.advancedControls = document.getElementById('advancedControls');
         this.radiusBtns = document.querySelectorAll('.radius-btn');
         this.radiusDisplay = document.getElementById('radiusDisplay');
@@ -37,11 +36,9 @@ class CellularAutomata {
         this.modeScrollBtn = document.getElementById('modeScroll');
         this.modeScanBtn = document.getElementById('modeScan');
         this.instantFillToggle = document.getElementById('instantFillToggle');
-        
         this.colorModeSelect = document.getElementById('colorMode');
         this.intensitySlider = document.getElementById('intensitySlider');
         this.intensityDisplay = document.getElementById('intensityDisplay');
-
         this.autoRandomToggle = document.getElementById('autoRandomToggle');
         this.waitToggle = document.getElementById('waitToggle');
         this.waitSettings = document.getElementById('waitSettings');
@@ -49,9 +46,12 @@ class CellularAutomata {
         this.waitDisplay = document.getElementById('waitDisplay');
         this.waitProgressBarContainer = document.getElementById('waitProgressBarContainer');
         this.waitProgressBar = document.getElementById('waitProgressBar');
+        this.btnDrawWall = document.getElementById('btnDrawWall');
+        this.btnClearWalls = document.getElementById('btnClearWalls');
+        this.xyPropagationToggle = document.getElementById('xyPropagationToggle');
+        this.edgeWrapToggle = document.getElementById('edgeWrapToggle');
 
         this.radius = 1;
-        this.isAdvanced = false;
         this.rule = 30n;
         this.ruleTable = new Uint8Array(8);
         this.cellSize = parseInt(this.sizeSlider.value);
@@ -73,7 +73,11 @@ class CellularAutomata {
         this.cols = 0;
         this.rows = 0;
         this.grid = [];
+        this.walls = [];
         this.gridPointer = 0;
+        this.isDrawingWalls = false;
+        this.xyPropagation = false;
+        this.edgeWrap = true;
         this.totalGenerations = 0;
         this.isRunning = false;
         this.initialMode = 'center';
@@ -86,16 +90,20 @@ class CellularAutomata {
         this.animationReq = null;
 
         this.bindEvents();
+        this.populatePresets();
         this.setRule(this.rule);
         this.resizeAndReset();
+        lucide.createIcons();
     }
 
     bindEvents() {
         this.ruleInput.addEventListener('input', (e) => this.setRule(e.target.value));
         this.presetRules.addEventListener('change', (e) => {
-            if (e.target.value) {
-                this.ruleInput.value = e.target.value;
-                this.setRule(e.target.value);
+            const preset = AUTOMATA_PRESETS[e.target.value];
+            if (preset) {
+                this.setRadius(preset.radius, false); // false = don't randomize
+                this.ruleInput.value = preset.rule;
+                this.setRule(preset.rule);
             }
         });
         this.btnRandomRule.addEventListener('click', () => {
@@ -117,11 +125,6 @@ class CellularAutomata {
             }
         });
         this.resetOnChangeToggle.addEventListener('change', (e) => this.resetOnRuleChange = e.target.checked);
-        this.advancedToggle.addEventListener('change', (e) => {
-            this.isAdvanced = e.target.checked;
-            this.advancedControls.classList.toggle('hidden', !this.isAdvanced);
-            if (!this.isAdvanced) this.setRadius(1);
-        });
         this.radiusBtns.forEach(btn => btn.addEventListener('click', () => this.setRadius(parseInt(btn.dataset.radius))));
         this.entropyGuardOffBtn.addEventListener('click', () => {
             this.entropyGuardEnabled = false;
@@ -140,10 +143,7 @@ class CellularAutomata {
             this.draw();
         });
         this.modeScanBtn.addEventListener('click', () => {
-            this.isScanMode = true;
-            this.modeScanBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
-            this.modeScrollBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
-            this.draw();
+            this.setScanMode(true);
         });
         this.instantFillToggle.addEventListener('change', (e) => this.instantFill = e.target.checked);
         this.colorModeSelect.addEventListener('change', (e) => { this.colorMode = e.target.value; this.draw(); });
@@ -192,20 +192,112 @@ class CellularAutomata {
             this.initCenterBtn.className = "flex-1 py-2.5 rounded-lg text-[10px] font-bold transition-all duration-200 text-surface-500 hover:text-white";
             this.pause(); this.resizeAndReset(); if (this.instantFill) this.fillScreen();
         });
+        this.btnDrawWall.addEventListener('click', () => {
+            this.isDrawingWalls = !this.isDrawingWalls;
+            this.btnDrawWall.classList.toggle('bg-brand-500/20', this.isDrawingWalls);
+            this.btnDrawWall.classList.toggle('border-brand-500/50', this.isDrawingWalls);
+            this.canvas.style.cursor = this.isDrawingWalls ? 'crosshair' : 'default';
+            
+            if (this.isDrawingWalls && !this.isScanMode) {
+                this.setScanMode(true);
+            }
+        });
+        this.btnClearWalls.addEventListener('click', () => {
+            for (let y = 0; y < this.rows; y++) this.walls[y].fill(0);
+            this.draw();
+        });
+        this.xyPropagationToggle.addEventListener('change', (e) => this.xyPropagation = e.target.checked);
+        this.edgeWrapToggle.addEventListener('change', (e) => this.edgeWrap = e.target.checked);
+
+        this.canvas.addEventListener('mousedown', (e) => {
+            if (!this.isDrawingWalls) return;
+            this.isPainting = true;
+            this.paintWall(e);
+        });
+        this.canvas.addEventListener('mousemove', (e) => {
+            if (this.isPainting) this.paintWall(e);
+        });
+        window.addEventListener('mouseup', () => {
+            this.isPainting = false;
+            this.lastX = undefined;
+            this.lastY = undefined;
+        });
+
         window.addEventListener('resize', () => {
             clearTimeout(this.resizeTimeout);
             this.resizeTimeout = setTimeout(() => { this.pause(); this.resizeAndReset(); }, 200);
         });
     }
 
-    setRadius(r) {
+    paintWall(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const x = Math.floor(((e.clientX - rect.left) * scaleX) / this.cellSize);
+        const y = Math.floor(((e.clientY - rect.top) * scaleY) / this.cellSize);
+        
+        if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
+            if (!this.isScanMode) this.setScanMode(true);
+            
+            const val = e.shiftKey ? 0 : 1;
+            
+            if (this.lastX !== undefined && this.lastY !== undefined) {
+                // Line interpolation (Bresenham's)
+                let dx = Math.abs(x - this.lastX), dy = Math.abs(y - this.lastY);
+                let sx = (this.lastX < x) ? 1 : -1, sy = (this.lastY < y) ? 1 : -1;
+                let err = dx - dy;
+                let lx = this.lastX, ly = this.lastY;
+                
+                while (true) {
+                    if (lx >= 0 && lx < this.cols && ly >= 0 && ly < this.rows) {
+                        this.walls[ly][lx] = val;
+                    }
+                    if (lx === x && ly === y) break;
+                    let e2 = 2 * err;
+                    if (e2 > -dy) { err -= dy; lx += sx; }
+                    if (e2 < dx) { err += dx; ly += sy; }
+                }
+            } else {
+                this.walls[y][x] = val;
+            }
+            
+            this.lastX = x;
+            this.lastY = y;
+            this.draw();
+        }
+    }
+
+    setScanMode(isScan) {
+        this.isScanMode = isScan;
+        if (isScan) {
+            this.modeScanBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.modeScrollBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
+        } else {
+            this.modeScrollBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.modeScanBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
+        }
+        this.draw();
+    }
+
+    populatePresets() {
+        this.presetRules.innerHTML = '<option value="" class="bg-surface-900">Explore Presets...</option>';
+        AUTOMATA_PRESETS.forEach((preset, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = preset.name;
+            option.className = 'bg-surface-900';
+            this.presetRules.appendChild(option);
+        });
+    }
+
+    setRadius(r, randomize = true) {
         this.radius = r;
         this.radiusDisplay.textContent = `R${r}`;
         this.radiusBtns.forEach(btn => {
             const active = parseInt(btn.dataset.radius) === r;
             btn.className = `radius-btn flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${active ? 'bg-white/10 text-white' : 'text-surface-500 hover:text-white'}`;
         });
-        this.btnRandomRule.click();
+        if (randomize) this.btnRandomRule.click();
     }
 
     setRule(ruleValue) {
@@ -251,9 +343,14 @@ class CellularAutomata {
 
     resetGrid() {
         this.grid = Array.from({ length: this.rows }, () => new Uint8Array(this.cols));
+        this.walls = Array.from({ length: this.rows }, () => new Uint8Array(this.cols));
         this.gridPointer = 0; this.totalGenerations = 1;
         if (this.initialMode === 'center') this.grid[0][Math.floor(this.cols / 2)] = 1;
         else for (let i = 0; i < this.cols; i++) this.grid[0][i] = Math.random() > 0.5 ? 1 : 0;
+        
+        // Ensure initial state isn't inside a wall
+        for (let i = 0; i < this.cols; i++) if (this.walls[0][i]) this.grid[0][i] = 0;
+
         this.updateStats(); this.draw();
     }
 
@@ -304,16 +401,59 @@ class CellularAutomata {
         const prevRow = this.grid[this.gridPointer];
         this.gridPointer = (this.gridPointer + 1) % this.rows;
         const nextRow = this.grid[this.gridPointer], cols = this.cols, ruleTable = this.ruleTable, radius = this.radius;
+        const currentWalls = this.walls[this.gridPointer];
+
+        // 1. Calculate base next row
+        const baseNextRow = new Uint8Array(cols);
         if (radius === 1) {
-            let l = prevRow[cols - 1], c = prevRow[0], r = prevRow[1];
-            nextRow[0] = ruleTable[(l << 2) | (c << 1) | r];
-            for (let i = 1; i < cols - 1; i++) { l = c; c = r; r = prevRow[i + 1]; nextRow[i] = ruleTable[(l << 2) | (c << 1) | r]; }
-            nextRow[cols - 1] = ruleTable[(c << 2) | (r << 1) | prevRow[0]];
+            for (let i = 0; i < cols; i++) {
+                let l, c, r;
+                if (this.edgeWrap) {
+                    l = prevRow[(i - 1 + cols) % cols];
+                    c = prevRow[i];
+                    r = prevRow[(i + 1) % cols];
+                } else {
+                    l = (i === 0) ? 0 : prevRow[i - 1];
+                    c = prevRow[i];
+                    r = (i === cols - 1) ? 0 : prevRow[i + 1];
+                }
+                baseNextRow[i] = ruleTable[(l << 2) | (c << 1) | r];
+            }
         } else {
-            const mask = (1 << (2 * radius + 1)) - 1; let w = 0;
-            for (let d = -radius; d <= radius; d++) w = (w << 1) | prevRow[(d + cols) % cols];
-            nextRow[0] = ruleTable[w];
-            for (let i = 1; i < cols; i++) { w = ((w << 1) | prevRow[(i + radius) % cols]) & mask; nextRow[i] = ruleTable[w]; }
+            const mask = (1 << (2 * radius + 1)) - 1;
+            for (let i = 0; i < cols; i++) {
+                let w = 0;
+                for (let d = -radius; d <= radius; d++) {
+                    let val = 0;
+                    if (this.edgeWrap) {
+                        val = prevRow[(i + d + cols) % cols];
+                    } else {
+                        const idx = i + d;
+                        val = (idx >= 0 && idx < cols) ? prevRow[idx] : 0;
+                    }
+                    w = (w << 1) | val;
+                }
+                baseNextRow[i] = ruleTable[w];
+            }
+        }
+
+        // 2. Apply walls and X-Y Propagation
+        nextRow.fill(0);
+        for (let i = 0; i < cols; i++) {
+            if (baseNextRow[i] === 0) continue;
+
+            if (!currentWalls[i]) {
+                nextRow[i] = 1;
+            } else if (this.xyPropagation) {
+                // Life is blocked! Try to leak to the nearest available side
+                let found = false;
+                for (let d = 1; d < 10; d++) { // Search up to 10 cells away
+                    const left = (i - d + cols) % cols;
+                    const right = (i + d + cols) % cols;
+                    if (!currentWalls[left] && !nextRow[left]) { nextRow[left] = 1; found = true; break; }
+                    if (!currentWalls[right] && !nextRow[right]) { nextRow[right] = 1; found = true; break; }
+                }
+            }
         }
         if (this.entropyGuardEnabled) {
             let u = true; for (let i = 1; i < cols; i++) if (nextRow[i] !== nextRow[0]) { u = false; break; }
@@ -386,22 +526,66 @@ class CellularAutomata {
     draw() {
         this.ctx.fillStyle = this.colorDead; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         const count = Math.min(this.totalGenerations, this.rows);
+        
         if (this.isScanMode) {
             for (let i = 0; i < count; i++) {
                 this.drawRow(this.grid[i], i, i);
+                this.drawWalls(this.walls[i], i);
             }
             this.ctx.fillStyle = 'rgba(255,255,255,0.15)';
             this.ctx.fillRect(0, this.gridPointer * this.cellSize, this.canvas.width, Math.max(1, this.cellSize / 2));
         } else {
             const sp = (this.gridPointer - count + 1 + this.rows) % this.rows;
-            for (let i = 0; i < count; i++) { const idx = (sp + i) % this.rows; this.drawRow(this.grid[idx], i, idx); }
+            for (let i = 0; i < count; i++) { 
+                const idx = (sp + i) % this.rows; 
+                this.drawRow(this.grid[idx], i, idx); 
+                this.drawWalls(this.walls[idx], i);
+            }
         }
+    }
+
+    drawWalls(row, y) {
+        if (!row.some(v => v === 1)) return;
+        const cs = this.cellSize;
+        this.ctx.save();
+        
+        for (let x = 0; x < this.cols; x++) {
+            if (row[x]) {
+                const px = x * cs;
+                const py = y * cs;
+                
+                // Wall Base with subtle gradient
+                const grad = this.ctx.createLinearGradient(px, py, px + cs, py + cs);
+                grad.addColorStop(0, '#3f3f46'); // zinc-700
+                grad.addColorStop(1, '#27272a'); // zinc-800
+                this.ctx.fillStyle = grad;
+                this.ctx.fillRect(px, py, cs, cs);
+                
+                // Highlight edges
+                this.ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                this.ctx.lineWidth = 0.5;
+                this.ctx.strokeRect(px + 0.5, py + 0.5, cs - 1, cs - 1);
+                
+                // Inner "structural" detail for larger cells
+                if (cs >= 6) {
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    this.ctx.fillRect(px + cs*0.2, py + cs*0.2, cs*0.6, cs*0.6);
+                    this.ctx.strokeStyle = 'rgba(161,161,170,0.2)'; // zinc-400
+                    this.ctx.strokeRect(px + cs*0.2, py + cs*0.2, cs*0.6, cs*0.6);
+                } else if (cs >= 3) {
+                    // Small dot for medium cells
+                    this.ctx.fillStyle = 'rgba(161,161,170,0.3)';
+                    this.ctx.fillRect(px + cs*0.3, py + cs*0.3, cs*0.4, cs*0.4);
+                }
+            }
+        }
+        this.ctx.restore();
     }
 
     togglePlay() { if (this.isRunning) this.pause(); else this.play(); }
     play() {
         this.isRunning = true;
-        this.btnPlay.innerHTML = '<i data-lucide="pause" class="w-4 h-4 fill-current"></i> <span>Pause</span>';
+        this.btnPlay.innerHTML = '<i data-lucide="pause" class="w-5 h-5 fill-current"></i>';
         this.btnPlay.classList.replace('bg-brand-500', 'bg-amber-500');
         this.btnPlay.classList.replace('hover:bg-brand-400', 'hover:bg-amber-400');
         lucide.createIcons(); this.lastFrameTime = performance.now();
@@ -411,7 +595,7 @@ class CellularAutomata {
         this.isRunning = false;
         this.isWaiting = false;
         this.waitProgressBarContainer.classList.add('opacity-0');
-        this.btnPlay.innerHTML = '<i data-lucide="play" class="w-4 h-4 fill-current"></i> <span>Play</span>';
+        this.btnPlay.innerHTML = '<i data-lucide="play" class="w-5 h-5 fill-current"></i>';
         this.btnPlay.classList.replace('bg-amber-500', 'bg-brand-500');
         this.btnPlay.classList.replace('hover:bg-amber-400', 'hover:bg-brand-400');
         lucide.createIcons(); if (this.animationReq) cancelAnimationFrame(this.animationReq);
