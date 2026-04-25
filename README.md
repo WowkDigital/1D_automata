@@ -2,6 +2,12 @@
 
 A premium, high-performance **1D Elementary Cellular Automata** simulator built with modern web technologies. Experience the beauty of mathematical chaos through a stunning, glassmorphism-inspired interface.
 
+<div align="center">
+  <a href="https://wowkdigital.github.io/1D_automata/">
+    <img src="https://img.shields.io/badge/Wersja_Online-Zobacz_Projekt-14b8a6?style=for-the-badge&logo=internetexplorer&logoColor=white" alt="Live Demo">
+  </a>
+</div>
+
 ![Automata Preview](https://via.placeholder.com/1200x600/0a0a0a/14b8a6?text=Automata.+1D+Cellular+Evolution)
 
 ## 🚀 Features
