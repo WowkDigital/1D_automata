@@ -8,6 +8,7 @@ class CellularAutomata {
         this.presetRules = document.getElementById('presetRules');
         this.ruleDisplay = document.getElementById('ruleDisplay');
         this.statsDisplay = document.getElementById('statsDisplay');
+        this.complexityValue = document.getElementById('complexityValue');
 
         this.btnPlay = document.getElementById('btnPlay');
         this.btnStep = document.getElementById('btnStep');
@@ -41,6 +42,14 @@ class CellularAutomata {
         this.intensitySlider = document.getElementById('intensitySlider');
         this.intensityDisplay = document.getElementById('intensityDisplay');
 
+        this.autoRandomToggle = document.getElementById('autoRandomToggle');
+        this.waitToggle = document.getElementById('waitToggle');
+        this.waitSettings = document.getElementById('waitSettings');
+        this.waitSlider = document.getElementById('waitSlider');
+        this.waitDisplay = document.getElementById('waitDisplay');
+        this.waitProgressBarContainer = document.getElementById('waitProgressBarContainer');
+        this.waitProgressBar = document.getElementById('waitProgressBar');
+
         this.radius = 1;
         this.isAdvanced = false;
         this.rule = 30n;
@@ -53,6 +62,12 @@ class CellularAutomata {
         this.instantFill = false;
         this.colorMode = 'solid';
         this.intensity = 1.0;
+
+        this.autoRandom = false;
+        this.waitBetweenScans = false;
+        this.waitTime = 2.0;
+        this.isWaiting = false;
+        this.waitStartTime = 0;
 
         this.cols = 0;
         this.rows = 0;
@@ -141,7 +156,20 @@ class CellularAutomata {
         this.btnReset.addEventListener('click', () => { this.pause(); this.resizeAndReset(); });
         this.speedSlider.addEventListener('input', (e) => {
             this.speed = parseInt(e.target.value);
-            this.speedDisplay.textContent = this.speed === 60 ? 'Max' : `${this.speed} fps`;
+            this.speedDisplay.textContent = this.speed >= 300 ? 'Hyper' : `${this.speed} fps`;
+        });
+        this.autoRandomToggle.addEventListener('change', (e) => this.autoRandom = e.target.checked);
+        this.waitToggle.addEventListener('change', (e) => {
+            this.waitBetweenScans = e.target.checked;
+            this.waitSettings.classList.toggle('hidden', !this.waitBetweenScans);
+            if (!this.waitBetweenScans) {
+                this.isWaiting = false;
+                this.waitProgressBarContainer.classList.add('opacity-0');
+            }
+        });
+        this.waitSlider.addEventListener('input', (e) => {
+            this.waitTime = parseFloat(e.target.value);
+            this.waitDisplay.textContent = `${this.waitTime.toFixed(1)}s`;
         });
         this.sizeSlider.addEventListener('change', (e) => {
             this.cellSize = parseInt(e.target.value);
@@ -229,7 +257,42 @@ class CellularAutomata {
     }
 
     fillScreen() { for (let i = 0; i < this.rows - 1; i++) this.generateNextRow(); this.draw(); }
-    updateStats() { this.statsDisplay.textContent = `GEN: ${this.totalGenerations}`; }
+    updateStats() { 
+        this.statsDisplay.querySelector('span').textContent = `GEN: ${this.totalGenerations}`;
+        const complexity = this.calculateComplexity();
+        this.complexityValue.textContent = `${complexity.toFixed(1)}%`;
+    }
+
+    calculateComplexity() {
+        const row = this.grid[this.gridPointer];
+        if (!row || this.cols < 5) return 0;
+
+        // Using 5-bit blocks for "advanced" spatial entropy (32 patterns)
+        const patternCounts = new Array(32).fill(0);
+        const n = this.cols;
+        
+        for (let i = 0; i < n; i++) {
+            const b1 = row[(i - 2 + n) % n];
+            const b2 = row[(i - 1 + n) % n];
+            const b3 = row[i];
+            const b4 = row[(i + 1) % n];
+            const b5 = row[(i + 2) % n];
+            
+            const pattern = (b1 << 4) | (b2 << 3) | (b3 << 2) | (b4 << 1) | b5;
+            patternCounts[pattern]++;
+        }
+
+        let entropy = 0;
+        for (let count of patternCounts) {
+            if (count > 0) {
+                const p = count / n;
+                entropy -= p * Math.log2(p);
+            }
+        }
+
+        // Normalize to 0-100% (max entropy for 5 bits is 5)
+        return (entropy / 5) * 100;
+    }
 
     generateNextRow() {
         const prevRow = this.grid[this.gridPointer];
@@ -250,7 +313,32 @@ class CellularAutomata {
             let u = true; for (let i = 1; i < cols; i++) if (nextRow[i] !== nextRow[0]) { u = false; break; }
             if (u) for (let i = 0; i < cols; i++) nextRow[i] = Math.random() > 0.5 ? 1 : 0;
         }
+
+        // Check for end of scan cycle
+        if (this.isScanMode && this.gridPointer === 0) {
+            if (this.autoRandom) this.randomizeRule();
+            if (this.waitBetweenScans) {
+                this.isWaiting = true;
+                this.waitStartTime = performance.now();
+                this.waitProgressBarContainer.classList.remove('opacity-0');
+            }
+        }
+
         this.totalGenerations++; this.updateStats();
+    }
+
+    randomizeRule() {
+        const bitCount = 1 << (2 * this.radius + 1);
+        let randomRule = 0n;
+        if (bitCount <= 32) {
+            randomRule = BigInt(Math.floor(Math.random() * (2 ** bitCount)));
+        } else {
+            let hex = '0x';
+            for (let i = 0; i < bitCount / 4; i++) hex += Math.floor(Math.random() * 16).toString(16);
+            randomRule = BigInt(hex);
+        }
+        this.ruleInput.value = randomRule.toString();
+        this.setRule(randomRule);
     }
 
     drawRow(row, y, gridIdx) {
@@ -315,6 +403,8 @@ class CellularAutomata {
     }
     pause() {
         this.isRunning = false;
+        this.isWaiting = false;
+        this.waitProgressBarContainer.classList.add('opacity-0');
         this.btnPlay.innerHTML = '<i data-lucide="play" class="w-4 h-4 fill-current"></i> <span>Play</span>';
         this.btnPlay.classList.replace('bg-amber-500', 'bg-brand-500');
         this.btnPlay.classList.replace('hover:bg-amber-400', 'hover:bg-brand-400');
@@ -323,10 +413,30 @@ class CellularAutomata {
     loop(timestamp) {
         if (!this.isRunning) return;
         const dt = timestamp - this.lastFrameTime; this.lastFrameTime = timestamp;
-        const tpf = 1000 / this.speed; this.frameAccumulator += dt;
-        let its = 0, nr = false;
-        while (this.frameAccumulator >= tpf && its < 10) { this.generateNextRow(); this.frameAccumulator -= tpf; its++; nr = true; }
-        if (nr) this.draw();
+
+        if (this.isWaiting) {
+            const elapsed = (timestamp - this.waitStartTime) / 1000;
+            const progress = Math.min(100, (elapsed / this.waitTime) * 100);
+            this.waitProgressBar.style.width = `${progress}%`;
+            
+            if (elapsed >= this.waitTime) {
+                this.isWaiting = false;
+                this.waitProgressBarContainer.classList.add('opacity-0');
+                setTimeout(() => { this.waitProgressBar.style.width = '0%'; }, 300);
+            }
+        } else {
+            const tpf = 1000 / this.speed; this.frameAccumulator += dt;
+            let its = 0, nr = false;
+            while (this.frameAccumulator >= tpf && its < 20) { 
+                this.generateNextRow(); 
+                this.frameAccumulator -= tpf; 
+                its++; 
+                nr = true;
+                if (this.isWaiting) break; // Stop generating if we entered wait state
+            }
+            if (nr) this.draw();
+        }
+        
         if (this.isRunning) this.animationReq = requestAnimationFrame((t) => this.loop(t));
     }
 }
