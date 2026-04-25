@@ -6,6 +6,9 @@ A premium, high-performance **1D Elementary Cellular Automata** simulator built 
   <a href="https://wowkdigital.github.io/1D_automata/">
     <img src="https://img.shields.io/badge/Wersja_Online-Zobacz_Projekt-14b8a6?style=for-the-badge&logo=internetexplorer&logoColor=white" alt="Live Demo">
   </a>
+  <a href="https://github.com/WowkDigital/1D_automata">
+    <img src="https://img.shields.io/badge/GitHub-Repozytorium-24292e?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Repo">
+  </a>
 </div>
 
 ![Automata Preview](https://via.placeholder.com/1200x600/0a0a0a/14b8a6?text=Automata.+1D+Cellular+Evolution)
