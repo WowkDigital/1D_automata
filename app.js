@@ -68,6 +68,7 @@ class CellularAutomata {
         this.waitTime = 2.0;
         this.isWaiting = false;
         this.waitStartTime = 0;
+        this.smoothedComplexity = 0;
 
         this.cols = 0;
         this.rows = 0;
@@ -259,8 +260,13 @@ class CellularAutomata {
     fillScreen() { for (let i = 0; i < this.rows - 1; i++) this.generateNextRow(); this.draw(); }
     updateStats() { 
         this.statsDisplay.querySelector('span').textContent = `GEN: ${this.totalGenerations}`;
-        const complexity = this.calculateComplexity();
-        this.complexityValue.textContent = `${complexity.toFixed(1)}%`;
+        const rawComplexity = this.calculateComplexity();
+        
+        // Exponential Moving Average for stability (alpha = 0.1)
+        if (this.totalGenerations === 1) this.smoothedComplexity = rawComplexity;
+        else this.smoothedComplexity = (rawComplexity * 0.1) + (this.smoothedComplexity * 0.9);
+
+        this.complexityValue.textContent = `${this.smoothedComplexity.toFixed(1)}%`;
     }
 
     calculateComplexity() {
