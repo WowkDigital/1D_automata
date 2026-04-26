@@ -82,6 +82,9 @@
 
         <!-- Secondary Actions -->
         <div class="flex items-center gap-4">
+            <button id="btnShare" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-surface-500 hover:text-white transition-all duration-300 border border-white/5" title="Copy Configuration Link">
+                <i data-lucide="share-2" class="w-4 h-4"></i>
+            </button>
             <div id="statsDisplay" class="hidden md:flex gap-6 text-[10px] font-mono text-surface-400 uppercase tracking-widest">
                 <div class="flex items-center gap-2">
                     <span class="w-1 h-1 rounded-full bg-brand-500"></span>
@@ -100,251 +103,233 @@
 
     <div class="flex flex-1 overflow-hidden relative">
         <!-- Sidebar -->
-        <aside class="w-full md:w-80 lg:w-80 h-full glass-panel z-20 flex flex-col shadow-2xl relative border-r border-white/5 overflow-hidden">
+        <aside id="sidebar" class="w-full md:w-80 lg:w-80 h-full glass-panel z-20 flex flex-col shadow-2xl relative border-r border-white/5 overflow-hidden">
             <div class="p-6 flex flex-col gap-6 overflow-y-auto h-full scroll-smooth custom-scrollbar">
                 
-                <!-- SECTION 1: RULE ARCHITECTURE -->
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <i data-lucide="settings-2" class="w-3.5 h-3.5 text-brand-500"></i>
-                        <h2 class="text-[10px] font-bold text-surface-400 uppercase tracking-[0.2em]">Rule Architecture</h2>
+                <!-- GROUP 1: CELLULAR LOGIC -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2 px-1">
+                        <i data-lucide="cpu" class="w-4 h-4 text-brand-500"></i>
+                        <h2 class="text-xs font-bold text-white uppercase tracking-[0.2em]">Cellular Logic</h2>
                     </div>
-
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span id="ruleDisplay" class="text-[10px] font-mono bg-brand-500/10 text-brand-400 px-2 py-0.5 rounded-full border border-brand-500/20">Rule 30</span>
-                            <div class="flex gap-4">
-                                <label class="flex items-center gap-2 cursor-pointer group" title="New random rule on every scan">
-                                    <span class="text-[10px] text-surface-500 group-hover:text-surface-400 transition-colors">Auto</span>
-                                    <input type="checkbox" id="autoRandomToggle" class="hidden peer">
-                                    <div class="w-7 h-4 bg-white/10 rounded-full peer-checked:bg-brand-500 transition-all relative after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:after:translate-x-3"></div>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer group" title="Reset simulation when rule changes">
-                                    <span class="text-[10px] text-surface-500 group-hover:text-surface-400 transition-colors">Reset</span>
-                                    <input type="checkbox" id="resetOnChange" class="hidden peer">
-                                    <div class="w-7 h-4 bg-white/10 rounded-full peer-checked:bg-brand-500 transition-all relative after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:after:translate-x-3"></div>
-                                </label>
+                    <div class="bg-white/5 rounded-2xl border border-white/5 divide-y divide-white/5 overflow-hidden">
+                        <!-- Presets -->
+                        <div class="p-4 bg-white/[0.02]">
+                            <div class="relative">
+                                <select id="presetRules" class="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-2.5 text-surface-200 focus:outline-none focus:border-brand-500 transition-all cursor-pointer appearance-none text-sm font-medium">
+                                    <option value="" class="bg-surface-900">Explore Presets...</option>
+                                </select>
+                                <div class="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 pointer-events-none"><i data-lucide="chevron-down" class="w-4 h-4"></i></div>
                             </div>
                         </div>
                         
-                        <div class="flex gap-2">
-                            <div class="relative flex-1">
-                                <input type="text" id="ruleInput" value="30" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all font-mono text-lg text-center appearance-none">
-                                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-surface-500"><i data-lucide="hash" class="w-4 h-4"></i></div>
-                            </div>
-                            <button id="btnRandomRule" class="px-4 bg-white/5 hover:bg-white/10 text-brand-400 border border-white/10 rounded-xl transition-all active:scale-95 flex items-center justify-center group" title="Generate Random Rule">
-                                <i data-lucide="shuffle" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
-                            </button>
-                        </div>
-
-                        <div class="relative">
-                            <select id="presetRules" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-surface-300 focus:outline-none focus:border-brand-500 transition-all cursor-pointer appearance-none text-sm">
-                                <option value="" class="bg-surface-900">Explore Presets...</option>
-                            </select>
-                            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 pointer-events-none"><i data-lucide="chevron-down" class="w-4 h-4"></i></div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div id="advancedControls" class="space-y-4">
-                            <div class="space-y-3">
-                                <label class="text-[10px] font-medium text-surface-400 flex items-center justify-between uppercase tracking-widest">
-                                    <span>Neighborhood Radius</span>
-                                    <span id="radiusDisplay" class="text-brand-500">R1</span>
-                                </label>
-                                <div class="flex p-1 bg-white/5 rounded-xl border border-white/5">
-                                    <button class="radius-btn flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white" data-radius="1">R1</button>
-                                    <button class="radius-btn flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white" data-radius="2">R2</button>
-                                    <button class="radius-btn flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white" data-radius="3">R3</button>
-                                    <button class="radius-btn flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white" data-radius="4">R4</button>
+                        <!-- Rule Definition -->
+                        <div class="p-4 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span id="ruleDisplay" class="text-[10px] font-mono bg-brand-500/10 text-brand-400 px-2 py-0.5 rounded-full border border-brand-500/20">Rule 30</span>
+                                <div class="flex gap-4">
+                                    <label class="flex items-center gap-2 cursor-pointer group" title="New random rule on every scan">
+                                        <span class="text-[9px] text-surface-500 group-hover:text-surface-300 transition-colors uppercase tracking-widest font-bold">Auto</span>
+                                        <input type="checkbox" id="autoRandomToggle" class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer group" title="Reset simulation when rule changes">
+                                        <span class="text-[9px] text-surface-500 group-hover:text-surface-300 transition-colors uppercase tracking-widest font-bold">Reset</span>
+                                        <input type="checkbox" id="resetOnChange" class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                                    </label>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card p-4 rounded-2xl">
-                        <div class="flex justify-between gap-1" id="ruleVisualizer"></div>
-                    </div>
-                </div>
-
-                <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-
-                <!-- SECTION 2: SIMULATION ENGINE -->
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <i data-lucide="sliders" class="w-3.5 h-3.5 text-brand-500"></i>
-                        <h2 class="text-[10px] font-bold text-surface-400 uppercase tracking-[0.2em]">Engine Config</h2>
-                    </div>
-
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <label class="text-[10px] font-medium text-surface-500 uppercase tracking-widest">Tempo</label>
-                            <span id="speedDisplay" class="text-[10px] font-mono text-brand-500">60 fps</span>
-                        </div>
-                        <input type="range" id="speedSlider" min="1" max="300" value="60">
-                    </div>
-
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <label class="text-[10px] font-medium text-surface-500 uppercase tracking-widest">Resolution</label>
-                            <span id="sizeDisplay" class="text-[10px] font-mono text-brand-500">4px</span>
-                        </div>
-                        <input type="range" id="sizeSlider" min="1" max="20" value="4">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="flex items-center gap-3 p-2 bg-white/5 rounded-xl border border-white/5">
-                            <input type="color" id="colorAlive" value="#14b8a6" class="w-6 h-6 rounded cursor-pointer bg-transparent">
-                            <span class="text-[9px] text-surface-500 font-bold uppercase tracking-tighter">Active</span>
-                        </div>
-                        <div class="flex items-center gap-3 p-2 bg-white/5 rounded-xl border border-white/5">
-                            <input type="color" id="colorDead" value="#0a0a0a" class="w-6 h-6 rounded cursor-pointer bg-transparent">
-                            <span class="text-[9px] text-surface-500 font-bold uppercase tracking-tighter">Void</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-
-                <!-- SECTION 3: INITIAL SEED -->
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand-500"></i>
-                        <h2 class="text-[10px] font-bold text-surface-400 uppercase tracking-[0.2em]">Initial Seed</h2>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <label class="text-[10px] font-medium text-surface-500 uppercase tracking-widest">Seed Pattern</label>
-                            <label class="flex items-center gap-2 cursor-pointer group" title="Fill entire screen instantly">
-                                <span class="text-[10px] text-surface-500 group-hover:text-surface-400 transition-colors">Instant</span>
-                                <input type="checkbox" id="instantFillToggle" class="hidden peer">
-                                <div class="w-7 h-4 bg-white/10 rounded-full peer-checked:bg-brand-500 transition-all relative after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:after:translate-x-3"></div>
-                            </label>
-                        </div>
-                        <div class="flex p-1 bg-white/5 rounded-xl border border-white/5">
-                            <button id="initCenter" class="flex-1 py-2 rounded-lg text-[10px] font-bold transition-all duration-200 bg-white/10 text-white shadow-sm">CENTER</button>
-                            <button id="initRandom" class="flex-1 py-2 rounded-lg text-[10px] font-bold transition-all duration-200 text-surface-500 hover:text-white">RANDOM</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-
-                <!-- SECTION 4: COLORING -->
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <i data-lucide="palette" class="w-3.5 h-3.5 text-brand-500"></i>
-                        <h2 class="text-[10px] font-bold text-surface-400 uppercase tracking-[0.2em]">Coloring</h2>
-                    </div>
-                    <div class="space-y-4">
-                        <select id="colorMode" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-surface-300 focus:outline-none focus:border-brand-500 transition-all cursor-pointer appearance-none text-[10px]">
-                            <option value="solid" class="bg-surface-900">Solid (Standard)</option>
-                            <option value="neighbors" class="bg-surface-900">Neighborhood Density</option>
-                            <option value="column" class="bg-surface-900">Column History</option>
-                            <option value="row" class="bg-surface-900">Row Density</option>
-                        </select>
-                        <div class="space-y-2">
-                            <div class="flex justify-between items-center">
-                                <label class="text-[9px] font-medium text-surface-500 uppercase tracking-widest">Intensity</label>
-                                <span id="intensityDisplay" class="text-[9px] font-mono text-brand-500">100%</span>
+                            <div class="flex gap-2">
+                                <div class="relative flex-1">
+                                    <input type="text" id="ruleInput" value="30" class="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-500 transition-all font-mono text-base text-center appearance-none">
+                                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500"><i data-lucide="hash" class="w-4 h-4"></i></div>
+                                </div>
+                                <button id="btnRandomRule" class="px-4 bg-black/20 hover:bg-white/10 text-brand-400 border border-white/5 rounded-xl transition-all active:scale-95 flex items-center justify-center group" title="Generate Random Rule">
+                                    <i data-lucide="shuffle" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+                                </button>
                             </div>
-                            <input type="range" id="intensitySlider" min="10" max="100" value="100">
                         </div>
-                    </div>
-                </div>
 
-                <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                        <!-- Neighborhood Radius -->
+                        <div class="p-4 flex items-center justify-between">
+                            <span class="text-[11px] font-semibold text-surface-300">Neighborhood Radius</span>
+                            <div class="flex p-1 bg-black/20 rounded-lg border border-white/5" id="advancedControls">
+                                <button class="radius-btn px-3 py-1 rounded text-[10px] font-bold transition-all bg-white/10 text-white" data-radius="1">R1</button>
+                                <button class="radius-btn px-3 py-1 rounded text-[10px] font-bold transition-all text-surface-500 hover:text-white" data-radius="2">R2</button>
+                                <button class="radius-btn px-3 py-1 rounded text-[10px] font-bold transition-all text-surface-500 hover:text-white" data-radius="3">R3</button>
+                                <button class="radius-btn px-3 py-1 rounded text-[10px] font-bold transition-all text-surface-500 hover:text-white" data-radius="4">R4</button>
+                            </div>
+                        </div>
 
-                <!-- SECTION 3: SYSTEM SETTINGS (GROUPED) -->
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <i data-lucide="cog" class="w-3.5 h-3.5 text-brand-500"></i>
-                        <h2 class="text-[10px] font-bold text-surface-400 uppercase tracking-[0.2em]">System Controls</h2>
-                    </div>
-
-                    <div class="bg-white/5 rounded-2xl border border-white/5 divide-y divide-white/5 overflow-hidden">
-                        <!-- Render Mode -->
+                        <!-- Initial Seed -->
                         <div class="p-4 space-y-3">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="monitor" class="w-3.5 h-3.5 text-surface-400"></i>
-                                <span class="text-[11px] font-semibold text-surface-200">Render Mode</span>
+                            <div class="flex justify-between items-center">
+                                <span class="text-[11px] font-semibold text-surface-300">Initial Seed</span>
+                                <div class="flex gap-3">
+                                    <label class="flex items-center gap-1.5 cursor-pointer group" title="Auto-Play on Instant Fill">
+                                        <span class="text-[9px] text-surface-500 group-hover:text-surface-300 transition-colors uppercase tracking-widest font-bold">Auto-Play</span>
+                                        <input type="checkbox" id="autoPlayToggle" class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                                    </label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer group" title="Fill entire screen instantly">
+                                        <span class="text-[9px] text-surface-500 group-hover:text-surface-300 transition-colors uppercase tracking-widest font-bold">Instant Fill</span>
+                                        <input type="checkbox" id="instantFillToggle" class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                                    </label>
+                                </div>
                             </div>
                             <div class="flex p-1 bg-black/20 rounded-xl border border-white/5">
-                                <button id="modeScroll" class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white">SCROLL</button>
-                                <button id="modeScan" class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white">SCAN</button>
+                                <button id="initCenter" class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 bg-white/10 text-white shadow-sm">1 PIXEL</button>
+                                <button id="initRandom" class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 text-surface-500 hover:text-white">RANDOM</button>
                             </div>
                         </div>
 
-                        <!-- Scan Delay -->
-                        <div class="p-4 flex items-center justify-between">
-                            <div class="flex flex-col">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="timer" class="w-3.5 h-3.5 text-blue-500"></i>
-                                    <span class="text-[11px] font-semibold text-surface-200">Scan Delay</span>
-                                </div>
-                                <input type="range" id="waitSlider" min="0.5" max="10" step="0.5" value="2" class="mt-2 w-24">
-                            </div>
-                            <div class="flex flex-col items-end gap-2">
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="waitToggle" class="sr-only peer">
-                                    <div class="w-9 h-5 bg-white/10 rounded-full peer-checked:after:translate-x-full peer-checked:bg-brand-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                                </label>
-                                <span id="waitDisplay" class="text-[9px] font-mono text-brand-500">2.0s</span>
-                            </div>
+                        <!-- Logic Map -->
+                        <div class="p-4 bg-black/40">
+                            <div class="flex justify-between gap-1" id="ruleVisualizer"></div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Entropy Guard -->
+                <!-- GROUP 2: SIMULATION RULES -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2 px-1">
+                        <i data-lucide="settings-2" class="w-4 h-4 text-brand-500"></i>
+                        <h2 class="text-xs font-bold text-white uppercase tracking-[0.2em]">Physics & Engine</h2>
+                    </div>
+                    <div class="bg-white/5 rounded-2xl border border-white/5 divide-y divide-white/5 overflow-hidden">
+                        <!-- Render Mode -->
                         <div class="p-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <i data-lucide="life-buoy" class="w-3.5 h-3.5 text-amber-500"></i>
-                                <span class="text-[11px] font-semibold text-surface-200">Entropy Guard</span>
+                                <i data-lucide="monitor" class="w-4 h-4 text-surface-400"></i>
+                                <span class="text-[11px] font-semibold text-surface-200">Render Mode</span>
                             </div>
-                            <div class="flex p-1 bg-black/20 rounded-lg border border-white/5">
-                                <button id="entropyGuardOff" class="px-2 py-0.5 rounded text-[8px] font-bold transition-all bg-white/10 text-white">OFF</button>
-                                <button id="entropyGuardOn" class="px-2 py-0.5 rounded text-[8px] font-bold transition-all text-surface-500 hover:text-white">ON</button>
+                            <div class="flex p-1 bg-black/20 rounded-lg border border-white/5 w-32">
+                                <button id="modeScroll" class="flex-1 py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white">SCROLL</button>
+                                <button id="modeScan" class="flex-1 py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white">SCAN</button>
                             </div>
                         </div>
 
                         <!-- Edge Wrap -->
                         <div class="p-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <i data-lucide="scan-line" class="w-3.5 h-3.5 text-amber-500"></i>
+                                <i data-lucide="scan-line" class="w-4 h-4 text-amber-500"></i>
                                 <span class="text-[11px] font-semibold text-surface-200">Edge Wrap</span>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="edgeWrapToggle" class="sr-only peer" checked>
-                                <div class="w-9 h-5 bg-white/10 rounded-full peer-checked:after:translate-x-full peer-checked:bg-brand-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                                <input type="checkbox" id="edgeWrapToggle" class="w-4 h-4 accent-amber-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all" checked>
                             </label>
                         </div>
 
                         <!-- X-Y Propagation -->
                         <div class="p-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <i data-lucide="move-diagonal-2" class="w-3.5 h-3.5 text-indigo-500"></i>
+                                <i data-lucide="move-diagonal-2" class="w-4 h-4 text-indigo-500"></i>
                                 <span class="text-[11px] font-semibold text-surface-200">X-Y Flow</span>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="xyPropagationToggle" class="sr-only peer">
-                                <div class="w-9 h-5 bg-white/10 rounded-full peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                                <input type="checkbox" id="xyPropagationToggle" class="w-4 h-4 accent-indigo-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
                             </label>
+                        </div>
+
+                        <!-- Entropy Guard -->
+                        <div class="p-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="life-buoy" class="w-4 h-4 text-emerald-500"></i>
+                                <span class="text-[11px] font-semibold text-surface-200">Entropy Guard</span>
+                            </div>
+                            <div class="flex p-1 bg-black/20 rounded-lg border border-white/5 w-24">
+                                <button id="entropyGuardOff" class="flex-1 py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white">OFF</button>
+                                <button id="entropyGuardOn" class="flex-1 py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white">ON</button>
+                            </div>
+                        </div>
+
+                        <!-- Scan Delay -->
+                        <div class="p-4 flex items-center justify-between">
+                            <div class="flex flex-col w-1/2">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="timer" class="w-4 h-4 text-blue-500"></i>
+                                    <span class="text-[11px] font-semibold text-surface-200">Scan Delay</span>
+                                </div>
+                                <input type="range" id="waitSlider" min="0.5" max="10" step="0.5" value="2" class="mt-2 w-full accent-blue-500">
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="waitToggle" class="w-4 h-4 accent-blue-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                                </label>
+                                <span id="waitDisplay" class="text-[10px] font-mono text-blue-400">2.0s</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-
-                <!-- SECTION 4: OBSTACLES -->
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <i data-lucide="construction" class="w-3.5 h-3.5 text-brand-500"></i>
-                        <h2 class="text-[10px] font-bold text-surface-400 uppercase tracking-[0.2em]">Obstacles</h2>
+                <!-- GROUP 3: AESTHETICS & RENDER -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2 px-1">
+                        <i data-lucide="palette" class="w-4 h-4 text-brand-500"></i>
+                        <h2 class="text-xs font-bold text-white uppercase tracking-[0.2em]">Aesthetics</h2>
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-3">
-                        <button id="btnDrawWall" class="col-span-1 bg-white/5 hover:bg-white/10 text-white font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-white/10 active:scale-95 text-[10px]">
-                            <i data-lucide="pencil" class="w-3.5 h-3.5 text-brand-500"></i> <span>Walls</span>
+                    <div class="bg-white/5 rounded-2xl border border-white/5 divide-y divide-white/5 overflow-hidden">
+                        <!-- Tempo & Resolution -->
+                        <div class="p-4 space-y-4">
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] font-medium text-surface-400 uppercase tracking-widest">Tempo</span>
+                                    <span id="speedDisplay" class="text-[10px] font-mono text-white">60 fps</span>
+                                </div>
+                                <input type="range" id="speedSlider" min="1" max="300" value="60" class="w-full">
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] font-medium text-surface-400 uppercase tracking-widest">Resolution</span>
+                                    <span id="sizeDisplay" class="text-[10px] font-mono text-white">4px</span>
+                                </div>
+                                <input type="range" id="sizeSlider" min="1" max="20" value="4" class="w-full">
+                            </div>
+                        </div>
+
+                        <!-- Coloring Mode -->
+                        <div class="p-4 space-y-4">
+                            <div class="space-y-2">
+                                <span class="text-[10px] font-medium text-surface-400 uppercase tracking-widest block">Color Mode</span>
+                                <select id="colorMode" class="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-2 text-surface-200 focus:outline-none focus:border-brand-500 transition-all cursor-pointer appearance-none text-xs">
+                                    <option value="solid" class="bg-surface-900">Solid (Standard)</option>
+                                    <option value="neighbors" class="bg-surface-900">Neighborhood Density</option>
+                                    <option value="column" class="bg-surface-900">Column History</option>
+                                    <option value="row" class="bg-surface-900">Row Density</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] font-medium text-surface-400 uppercase tracking-widest">Intensity</span>
+                                    <span id="intensityDisplay" class="text-[10px] font-mono text-white">100%</span>
+                                </div>
+                                <input type="range" id="intensitySlider" min="10" max="100" value="100" class="w-full">
+                            </div>
+                        </div>
+
+                        <!-- Palette -->
+                        <div class="p-4 grid grid-cols-2 gap-3">
+                            <div class="flex items-center gap-3 p-2 bg-black/20 rounded-xl border border-white/5">
+                                <input type="color" id="colorAlive" value="#14b8a6" class="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0">
+                                <span class="text-[9px] text-surface-400 font-bold uppercase tracking-widest">Active</span>
+                            </div>
+                            <div class="flex items-center gap-3 p-2 bg-black/20 rounded-xl border border-white/5">
+                                <input type="color" id="colorDead" value="#0a0a0a" class="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0">
+                                <span class="text-[9px] text-surface-400 font-bold uppercase tracking-widest">Void</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GROUP 4: OBSTACLES -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2 px-1">
+                        <i data-lucide="construction" class="w-4 h-4 text-brand-500"></i>
+                        <h2 class="text-xs font-bold text-white uppercase tracking-[0.2em]">Obstacles</h2>
+                    </div>
+                    <div class="bg-white/5 rounded-2xl border border-white/5 p-4 flex gap-3">
+                        <button id="btnDrawWall" class="flex-1 bg-black/20 hover:bg-white/10 text-white font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-white/5 active:scale-95 text-[10px]">
+                            <i data-lucide="pencil" class="w-3.5 h-3.5 text-brand-500"></i> <span>Draw Walls</span>
                         </button>
-                        <button id="btnClearWalls" class="col-span-1 bg-white/5 hover:bg-white/10 text-white font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-white/10 active:scale-95 text-[10px]">
+                        <button id="btnClearWalls" class="flex-1 bg-black/20 hover:bg-white/10 text-white font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-white/5 active:scale-95 text-[10px]">
                             <i data-lucide="eraser" class="w-3.5 h-3.5 text-red-500"></i> <span>Clear</span>
                         </button>
                     </div>

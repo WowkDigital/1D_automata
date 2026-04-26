@@ -36,6 +36,7 @@ class CellularAutomata {
         this.modeScrollBtn = document.getElementById('modeScroll');
         this.modeScanBtn = document.getElementById('modeScan');
         this.instantFillToggle = document.getElementById('instantFillToggle');
+        this.autoPlayToggle = document.getElementById('autoPlayToggle');
         this.colorModeSelect = document.getElementById('colorMode');
         this.intensitySlider = document.getElementById('intensitySlider');
         this.intensityDisplay = document.getElementById('intensityDisplay');
@@ -48,6 +49,8 @@ class CellularAutomata {
         this.waitProgressBar = document.getElementById('waitProgressBar');
         this.btnDrawWall = document.getElementById('btnDrawWall');
         this.btnClearWalls = document.getElementById('btnClearWalls');
+        this.btnShare = document.getElementById('btnShare');
+        this.sidebar = document.getElementById('sidebar');
         this.xyPropagationToggle = document.getElementById('xyPropagationToggle');
         this.edgeWrapToggle = document.getElementById('edgeWrapToggle');
 
@@ -60,6 +63,7 @@ class CellularAutomata {
         this.entropyGuardEnabled = false;
         this.isScanMode = false;
         this.instantFill = false;
+        this.autoPlay = false;
         this.colorMode = 'solid';
         this.intensity = 1.0;
 
@@ -89,11 +93,170 @@ class CellularAutomata {
         this.frameAccumulator = 0;
         this.animationReq = null;
 
+        this.updateUrlDebounced = this.debounce(() => this.updateUrl(), 500);
+
         this.bindEvents();
         this.populatePresets();
-        this.setRule(this.rule);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const configParam = urlParams.get('c');
+        if (configParam && this.decodeConfig(configParam)) {
+            this.syncUIToState();
+        } else {
+            this.setRule(this.rule);
+        }
+        
         this.resizeAndReset();
         lucide.createIcons();
+    }
+
+    debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    encodeConfig() {
+        let flags = 0;
+        if (this.resetOnRuleChange) flags |= 1;
+        if (this.entropyGuardEnabled) flags |= 2;
+        if (this.isScanMode) flags |= 4;
+        if (this.instantFill) flags |= 8;
+        if (this.autoPlay) flags |= 16;
+        if (this.autoRandom) flags |= 32;
+        if (this.waitBetweenScans) flags |= 64;
+        if (this.xyPropagation) flags |= 128;
+        if (this.edgeWrap) flags |= 256;
+
+        const colorModes = ['solid', 'neighbors', 'column', 'row'];
+        const m = colorModes.indexOf(this.colorMode);
+        
+        const data = [
+            this.radius,
+            this.rule.toString(16),
+            this.cellSize,
+            this.speed,
+            flags,
+            m,
+            Math.round(this.intensity * 100),
+            this.waitTime,
+            this.initialMode === 'center' ? 0 : 1,
+            this.colorAlive.replace('#', ''),
+            this.colorDead.replace('#', '')
+        ];
+        
+        return btoa(data.join('-'));
+    }
+
+    decodeConfig(encoded) {
+        try {
+            const str = atob(encoded);
+            const p = str.split('-');
+            if (p.length !== 11) return false;
+
+            this.radius = parseInt(p[0]);
+            this.rule = BigInt('0x' + p[1]);
+            this.cellSize = parseInt(p[2]);
+            this.speed = parseInt(p[3]);
+            
+            const flags = parseInt(p[4]);
+            this.resetOnRuleChange = !!(flags & 1);
+            this.entropyGuardEnabled = !!(flags & 2);
+            this.isScanMode = !!(flags & 4);
+            this.instantFill = !!(flags & 8);
+            this.autoPlay = !!(flags & 16);
+            this.autoRandom = !!(flags & 32);
+            this.waitBetweenScans = !!(flags & 64);
+            this.xyPropagation = !!(flags & 128);
+            this.edgeWrap = !!(flags & 256);
+
+            const colorModes = ['solid', 'neighbors', 'column', 'row'];
+            this.colorMode = colorModes[parseInt(p[5])] || 'solid';
+            
+            this.intensity = parseInt(p[6]) / 100;
+            this.waitTime = parseFloat(p[7]);
+            this.initialMode = parseInt(p[8]) === 0 ? 'center' : 'random';
+            
+            this.colorAlive = '#' + p[9];
+            this.colorDead = '#' + p[10];
+
+            return true;
+        } catch(e) {
+            return false;
+        }
+    }
+
+    updateUrl() {
+        const configStr = this.encodeConfig();
+        const url = new URL(window.location);
+        url.searchParams.set('c', configStr);
+        window.history.replaceState({}, '', url);
+    }
+
+    syncUIToState() {
+        if (this.radiusDisplay) this.radiusDisplay.textContent = `R${this.radius}`;
+        this.radiusBtns.forEach(btn => {
+            const active = parseInt(btn.dataset.radius) === this.radius;
+            btn.className = `radius-btn px-3 py-1 rounded text-[10px] font-bold transition-all ${active ? 'bg-white/10 text-white' : 'text-surface-500 hover:text-white'}`;
+        });
+
+        this.ruleInput.value = this.rule.toString(10);
+        const rs = this.rule.toString(10);
+        this.ruleDisplay.textContent = `Rule ${rs.length > 8 ? rs.substring(0, 8) + '...' : rs}`;
+
+        this.sizeSlider.value = this.cellSize;
+        this.sizeDisplay.textContent = `${this.cellSize}px`;
+
+        this.speedSlider.value = this.speed;
+        this.speedDisplay.textContent = this.speed >= 300 ? 'Hyper' : `${this.speed} fps`;
+
+        this.resetOnChangeToggle.checked = this.resetOnRuleChange;
+        this.autoRandomToggle.checked = this.autoRandom;
+        this.instantFillToggle.checked = this.instantFill;
+        if (this.autoPlayToggle) this.autoPlayToggle.checked = this.autoPlay;
+        this.waitToggle.checked = this.waitBetweenScans;
+        this.waitSettings.classList.toggle('hidden', !this.waitBetweenScans);
+        this.xyPropagationToggle.checked = this.xyPropagation;
+        this.edgeWrapToggle.checked = this.edgeWrap;
+
+        if (this.entropyGuardEnabled) {
+            this.entropyGuardOnBtn.className = "px-2 py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.entropyGuardOffBtn.className = "px-2 py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white";
+        } else {
+            this.entropyGuardOffBtn.className = "px-2 py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.entropyGuardOnBtn.className = "px-2 py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white";
+        }
+
+        if (this.isScanMode) {
+            this.modeScanBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.modeScrollBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
+        } else {
+            this.modeScrollBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.modeScanBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
+        }
+
+        this.colorModeSelect.value = this.colorMode;
+        this.intensitySlider.value = Math.round(this.intensity * 100);
+        this.intensityDisplay.textContent = `${Math.round(this.intensity * 100)}%`;
+
+        this.waitSlider.value = this.waitTime;
+        this.waitDisplay.textContent = `${this.waitTime.toFixed(1)}s`;
+
+        if (this.initialMode === 'center') {
+            this.initCenterBtn.className = "flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 bg-white/10 text-white shadow-sm";
+            this.initRandomBtn.className = "flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 text-surface-500 hover:text-white";
+        } else {
+            this.initRandomBtn.className = "flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 bg-white/10 text-white shadow-sm";
+            this.initCenterBtn.className = "flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 text-surface-500 hover:text-white";
+        }
+
+        this.colorAliveInput.value = this.colorAlive;
+        this.colorDeadInput.value = this.colorDead;
+        
+        this.updateRuleVisualizer();
+        this.setRule(this.rule);
     }
 
     bindEvents() {
@@ -104,6 +267,12 @@ class CellularAutomata {
                 this.setRadius(preset.radius, false); // false = don't randomize
                 this.ruleInput.value = preset.rule;
                 this.setRule(preset.rule);
+                if (this.instantFill) {
+                    this.pause();
+                    this.resizeAndReset();
+                    this.fillScreen();
+                    if (this.autoPlay) this.play();
+                }
             }
         });
         this.btnRandomRule.addEventListener('click', () => {
@@ -122,6 +291,7 @@ class CellularAutomata {
                 this.pause();
                 this.resizeAndReset();
                 this.fillScreen();
+                if (this.autoPlay) this.play();
             }
         });
         this.resetOnChangeToggle.addEventListener('change', (e) => this.resetOnRuleChange = e.target.checked);
@@ -146,6 +316,11 @@ class CellularAutomata {
             this.setScanMode(true);
         });
         this.instantFillToggle.addEventListener('change', (e) => this.instantFill = e.target.checked);
+        if (this.autoPlayToggle) {
+            this.autoPlayToggle.addEventListener('change', (e) => {
+                this.autoPlay = e.target.checked;
+            });
+        }
         this.colorModeSelect.addEventListener('change', (e) => { this.colorMode = e.target.value; this.draw(); });
         this.intensitySlider.addEventListener('input', (e) => {
             this.intensity = parseInt(e.target.value) / 100;
@@ -182,15 +357,23 @@ class CellularAutomata {
         this.colorDeadInput.addEventListener('input', (e) => { this.colorDead = e.target.value; this.updateRuleVisualizer(); this.draw(); });
         this.initCenterBtn.addEventListener('click', () => {
             this.initialMode = 'center';
-            this.initCenterBtn.className = "flex-1 py-2.5 rounded-lg text-[10px] font-bold transition-all duration-200 bg-white/10 text-white shadow-sm";
-            this.initRandomBtn.className = "flex-1 py-2.5 rounded-lg text-[10px] font-bold transition-all duration-200 text-surface-500 hover:text-white";
-            this.pause(); this.resizeAndReset(); if (this.instantFill) this.fillScreen();
+            this.initCenterBtn.className = "flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 bg-white/10 text-white shadow-sm";
+            this.initRandomBtn.className = "flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 text-surface-500 hover:text-white";
+            this.pause(); this.resizeAndReset(); 
+            if (this.instantFill) {
+                this.fillScreen();
+                if (this.autoPlay) this.play();
+            }
         });
         this.initRandomBtn.addEventListener('click', () => {
             this.initialMode = 'random';
-            this.initRandomBtn.className = "flex-1 py-2.5 rounded-lg text-[10px] font-bold transition-all duration-200 bg-white/10 text-white shadow-sm";
-            this.initCenterBtn.className = "flex-1 py-2.5 rounded-lg text-[10px] font-bold transition-all duration-200 text-surface-500 hover:text-white";
-            this.pause(); this.resizeAndReset(); if (this.instantFill) this.fillScreen();
+            this.initRandomBtn.className = "flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 bg-white/10 text-white shadow-sm";
+            this.initCenterBtn.className = "flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 text-surface-500 hover:text-white";
+            this.pause(); this.resizeAndReset(); 
+            if (this.instantFill) {
+                this.fillScreen();
+                if (this.autoPlay) this.play();
+            }
         });
         this.btnDrawWall.addEventListener('click', () => {
             this.isDrawingWalls = !this.isDrawingWalls;
@@ -222,6 +405,32 @@ class CellularAutomata {
             this.lastX = undefined;
             this.lastY = undefined;
         });
+
+        if (this.sidebar) {
+            const triggerUpdate = () => { if (this.updateUrlDebounced) this.updateUrlDebounced(); };
+            this.sidebar.addEventListener('input', triggerUpdate);
+            this.sidebar.addEventListener('change', triggerUpdate);
+            this.sidebar.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) triggerUpdate();
+            });
+        }
+
+        if (this.btnShare) {
+            this.btnShare.addEventListener('click', () => {
+                const url = window.location.href;
+                navigator.clipboard.writeText(url).then(() => {
+                    const icon = this.btnShare.querySelector('i');
+                    icon.setAttribute('data-lucide', 'check');
+                    this.btnShare.classList.add('text-brand-400');
+                    lucide.createIcons();
+                    setTimeout(() => {
+                        icon.setAttribute('data-lucide', 'share-2');
+                        this.btnShare.classList.remove('text-brand-400');
+                        lucide.createIcons();
+                    }, 2000);
+                });
+            });
+        }
 
         window.addEventListener('resize', () => {
             clearTimeout(this.resizeTimeout);
@@ -292,10 +501,10 @@ class CellularAutomata {
 
     setRadius(r, randomize = true) {
         this.radius = r;
-        this.radiusDisplay.textContent = `R${r}`;
+        if (this.radiusDisplay) this.radiusDisplay.textContent = `R${r}`;
         this.radiusBtns.forEach(btn => {
             const active = parseInt(btn.dataset.radius) === r;
-            btn.className = `radius-btn flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${active ? 'bg-white/10 text-white' : 'text-surface-500 hover:text-white'}`;
+            btn.className = `radius-btn px-3 py-1 rounded text-[10px] font-bold transition-all ${active ? 'bg-white/10 text-white' : 'text-surface-500 hover:text-white'}`;
         });
         if (randomize) this.btnRandomRule.click();
     }

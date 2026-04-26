@@ -17,5 +17,6 @@ const AUTOMATA_PRESETS = [
 
     // Advanced R3 Rules
     { name: "R3: Deep Wave", rule: "7382910384756291038", radius: 3 },
-    { name: "R3: Micro-structure", rule: "12345678901234567890", radius: 3 }
+    { name: "R3: Micro-structure", rule: "12345678901234567890", radius: 3 },
+    { name: "R3: Pillars", rule: "317127019013758173763018161803171919832", radius: 3 }
 ];
