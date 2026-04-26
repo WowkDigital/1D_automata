@@ -50,11 +50,17 @@ class CellularAutomata {
         this.btnDrawWall = document.getElementById('btnDrawWall');
         this.btnClearWalls = document.getElementById('btnClearWalls');
         this.btnShare = document.getElementById('btnShare');
+        this.btnShareMobile = document.getElementById('btnShareMobile');
+        this.statsDisplayMobile = document.getElementById('statsDisplayMobile');
         this.sidebar = document.getElementById('sidebar');
         this.xyPropagationToggle = document.getElementById('xyPropagationToggle');
         this.edgeWrapToggle = document.getElementById('edgeWrapToggle');
         this.scaleControls = document.getElementById('scaleControls');
         this.scaleBtns = document.querySelectorAll('.scale-btn');
+        
+        this.btnMobileMenu = document.getElementById('btnMobileMenu');
+        this.btnCloseSidebar = document.getElementById('btnCloseSidebar');
+        this.sidebarOverlay = document.getElementById('sidebarOverlay');
  
         this.renderScale = 1;
         this.radius = 1;
@@ -206,7 +212,7 @@ class CellularAutomata {
         if (this.radiusDisplay) this.radiusDisplay.textContent = `R${this.radius}`;
         this.radiusBtns.forEach(btn => {
             const active = parseInt(btn.dataset.radius) === this.radius;
-            btn.className = `radius-btn px-3 py-1 rounded text-[10px] font-bold transition-all ${active ? 'bg-white/10 text-white' : 'text-surface-500 hover:text-white'}`;
+            btn.className = `radius-btn px-3 py-2 md:py-1 rounded text-[10px] font-bold transition-all ${active ? 'bg-white/10 text-white' : 'text-surface-500 hover:text-white'}`;
         });
 
         this.ruleInput.value = this.rule.toString(10);
@@ -229,19 +235,19 @@ class CellularAutomata {
         this.edgeWrapToggle.checked = this.edgeWrap;
 
         if (this.entropyGuardEnabled) {
-            this.entropyGuardOnBtn.className = "px-2 py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white shadow-sm";
-            this.entropyGuardOffBtn.className = "px-2 py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white";
+            this.entropyGuardOnBtn.className = "px-2 py-2 md:py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.entropyGuardOffBtn.className = "px-2 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white";
         } else {
-            this.entropyGuardOffBtn.className = "px-2 py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white shadow-sm";
-            this.entropyGuardOnBtn.className = "px-2 py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white";
+            this.entropyGuardOffBtn.className = "px-2 py-2 md:py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.entropyGuardOnBtn.className = "px-2 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white";
         }
 
         if (this.isScanMode) {
-            this.modeScanBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
-            this.modeScrollBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
+            this.modeScanBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.modeScrollBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
         } else {
-            this.modeScrollBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
-            this.modeScanBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
+            this.modeScrollBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.modeScanBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
         }
 
         this.colorModeSelect.value = this.colorMode;
@@ -264,7 +270,7 @@ class CellularAutomata {
  
         this.scaleBtns.forEach(btn => {
             const active = parseInt(btn.dataset.scale) === this.renderScale;
-            btn.className = `scale-btn flex-1 py-1 rounded text-[9px] font-bold transition-all ${active ? 'bg-white/10 text-white shadow-sm' : 'text-surface-500 hover:text-white'}`;
+            btn.className = `scale-btn flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all ${active ? 'bg-white/10 text-white shadow-sm' : 'text-surface-500 hover:text-white'}`;
         });
         
         this.updateRuleVisualizer();
@@ -310,13 +316,13 @@ class CellularAutomata {
         this.radiusBtns.forEach(btn => btn.addEventListener('click', () => this.setRadius(parseInt(btn.dataset.radius))));
         this.entropyGuardOffBtn.addEventListener('click', () => {
             this.entropyGuardEnabled = false;
-            this.entropyGuardOffBtn.className = "px-2 py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white shadow-sm";
-            this.entropyGuardOnBtn.className = "px-2 py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white";
+            this.entropyGuardOffBtn.className = "px-2 py-2 md:py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.entropyGuardOnBtn.className = "px-2 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white";
         });
         this.entropyGuardOnBtn.addEventListener('click', () => {
             this.entropyGuardEnabled = true;
-            this.entropyGuardOnBtn.className = "px-2 py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white shadow-sm";
-            this.entropyGuardOffBtn.className = "px-2 py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white";
+            this.entropyGuardOnBtn.className = "px-2 py-2 md:py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.entropyGuardOffBtn.className = "px-2 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white";
         });
         this.modeScrollBtn.addEventListener('click', () => {
             this.isScanMode = false;
@@ -409,7 +415,7 @@ class CellularAutomata {
                 this.renderScale = parseInt(btn.dataset.scale);
                 this.scaleBtns.forEach(b => {
                     const active = parseInt(b.dataset.scale) === this.renderScale;
-                    b.className = `scale-btn flex-1 py-1 rounded text-[9px] font-bold transition-all ${active ? 'bg-white/10 text-white shadow-sm' : 'text-surface-500 hover:text-white'}`;
+                    b.className = `scale-btn flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all ${active ? 'bg-white/10 text-white shadow-sm' : 'text-surface-500 hover:text-white'}`;
                 });
                 this.pause();
                 this.resizeAndReset();
@@ -430,6 +436,27 @@ class CellularAutomata {
             this.lastY = undefined;
         });
 
+        // Touch events for mobile wall drawing
+        this.canvas.addEventListener('touchstart', (e) => {
+            if (!this.isDrawingWalls) return;
+            e.preventDefault();
+            this.isPainting = true;
+            this.paintWall(e.touches[0]);
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            if (this.isPainting) {
+                e.preventDefault();
+                this.paintWall(e.touches[0]);
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', () => {
+            this.isPainting = false;
+            this.lastX = undefined;
+            this.lastY = undefined;
+        });
+
         if (this.sidebar) {
             const triggerUpdate = () => { if (this.updateUrlDebounced) this.updateUrlDebounced(); };
             this.sidebar.addEventListener('input', triggerUpdate);
@@ -439,27 +466,56 @@ class CellularAutomata {
             });
         }
 
-        if (this.btnShare) {
-            this.btnShare.addEventListener('click', () => {
-                const url = window.location.href;
-                navigator.clipboard.writeText(url).then(() => {
-                    const icon = this.btnShare.querySelector('i');
+        const shareAction = () => {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                const buttons = [this.btnShare, this.btnShareMobile].filter(b => b);
+                buttons.forEach(btn => {
+                    const icon = btn.querySelector('i');
                     icon.setAttribute('data-lucide', 'check');
-                    this.btnShare.classList.add('text-brand-400');
+                    btn.classList.add('text-brand-400');
                     lucide.createIcons();
                     setTimeout(() => {
                         icon.setAttribute('data-lucide', 'share-2');
-                        this.btnShare.classList.remove('text-brand-400');
+                        btn.classList.remove('text-brand-400');
                         lucide.createIcons();
                     }, 2000);
                 });
             });
-        }
+        };
+
+        if (this.btnShare) this.btnShare.addEventListener('click', shareAction);
+        if (this.btnShareMobile) this.btnShareMobile.addEventListener('click', shareAction);
 
         window.addEventListener('resize', () => {
             clearTimeout(this.resizeTimeout);
             this.resizeTimeout = setTimeout(() => { this.pause(); this.resizeAndReset(); }, 200);
         });
+
+        // Mobile Menu Toggles
+        if (this.btnMobileMenu) {
+            this.btnMobileMenu.addEventListener('click', () => this.toggleSidebar(true));
+        }
+        if (this.btnCloseSidebar) {
+            this.btnCloseSidebar.addEventListener('click', () => this.toggleSidebar(false));
+        }
+        if (this.sidebarOverlay) {
+            this.sidebarOverlay.addEventListener('click', () => this.toggleSidebar(false));
+        }
+    }
+
+    toggleSidebar(show) {
+        if (!this.sidebar || !this.sidebarOverlay) return;
+        
+        if (show) {
+            this.sidebar.classList.remove('-translate-x-full');
+            this.sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            this.sidebarOverlay.classList.add('opacity-100');
+        } else {
+            this.sidebar.classList.add('-translate-x-full');
+            this.sidebarOverlay.classList.add('opacity-0', 'pointer-events-none');
+            this.sidebarOverlay.classList.remove('opacity-100');
+        }
     }
 
     paintWall(e) {
@@ -503,11 +559,11 @@ class CellularAutomata {
     setScanMode(isScan) {
         this.isScanMode = isScan;
         if (isScan) {
-            this.modeScanBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
-            this.modeScrollBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
+            this.modeScanBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.modeScrollBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
         } else {
-            this.modeScrollBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
-            this.modeScanBtn.className = "flex-1 py-2 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
+            this.modeScrollBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.modeScanBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
         }
         this.draw();
     }
@@ -528,7 +584,7 @@ class CellularAutomata {
         if (this.radiusDisplay) this.radiusDisplay.textContent = `R${r}`;
         this.radiusBtns.forEach(btn => {
             const active = parseInt(btn.dataset.radius) === r;
-            btn.className = `radius-btn px-3 py-1 rounded text-[10px] font-bold transition-all ${active ? 'bg-white/10 text-white' : 'text-surface-500 hover:text-white'}`;
+            btn.className = `radius-btn px-3 py-2 md:py-1 rounded text-[10px] font-bold transition-all ${active ? 'bg-white/10 text-white' : 'text-surface-500 hover:text-white'}`;
         });
         if (randomize) this.btnRandomRule.click();
     }
@@ -594,6 +650,7 @@ class CellularAutomata {
     fillScreen() { for (let i = 0; i < this.rows - 1; i++) this.generateNextRow(); this.draw(); }
     updateStats() { 
         this.statsDisplay.querySelector('span').textContent = `GEN: ${this.totalGenerations}`;
+        if (this.statsDisplayMobile) this.statsDisplayMobile.textContent = `G:${this.totalGenerations}`;
         const rawComplexity = this.calculateComplexity();
         
         // Exponential Moving Average for stability (alpha = 0.1)
