@@ -5,8 +5,8 @@ class CellularAutomata {
         this.container = document.getElementById('canvasContainer');
 
         this.ruleInput = document.getElementById('ruleInput');
+        this.btnCopyRule = document.getElementById('btnCopyRule');
         this.presetRules = document.getElementById('presetRules');
-        this.ruleDisplay = document.getElementById('ruleDisplay');
         this.statsDisplay = document.getElementById('statsDisplay');
         this.complexityValue = document.getElementById('complexityValue');
 
@@ -21,6 +21,8 @@ class CellularAutomata {
 
         this.initCenterBtn = document.getElementById('initCenter');
         this.initRandomBtn = document.getElementById('initRandom');
+
+        this.maxWidthInput = document.getElementById('maxWidthInput');
 
         this.colorAliveInput = document.getElementById('colorAlive');
         this.colorDeadInput = document.getElementById('colorDead');
@@ -61,6 +63,24 @@ class CellularAutomata {
         this.btnMobileMenu = document.getElementById('btnMobileMenu');
         this.btnCloseSidebar = document.getElementById('btnCloseSidebar');
         this.sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        this.minComplexityInput = document.getElementById('minComplexity');
+        this.maxComplexityInput = document.getElementById('maxComplexity');
+        this.minCompDisplay = document.getElementById('minCompDisplay');
+        this.maxCompDisplay = document.getElementById('maxCompDisplay');
+        this.maxAttemptsInput = document.getElementById('maxAttempts');
+        this.ignoreStableToggle = document.getElementById('ignoreStableToggle');
+        this.maxVolatilityToggle = document.getElementById('maxVolatilityToggle');
+        this.statsModeToggle = document.getElementById('statsModeToggle');
+        
+        this.logicStats = document.getElementById('logicStats');
+        this.btnCopyMap = document.getElementById('btnCopyMap');
+        this.stats = new AutomataStats('statsArea');
+
+        if (this.minComplexityInput) {
+            this.minCompDisplay.textContent = `${this.minComplexityInput.value}%`;
+            this.maxCompDisplay.textContent = `${this.maxComplexityInput.value}%`;
+        }
  
         this.renderScale = 1;
         this.radius = 1;
@@ -80,6 +100,7 @@ class CellularAutomata {
         this.waitBetweenScans = false;
         this.waitTime = 2.0;
         this.isWaiting = false;
+        this.isSearching = false;
         this.waitStartTime = 0;
         this.smoothedComplexity = 0;
 
@@ -216,8 +237,6 @@ class CellularAutomata {
         });
 
         this.ruleInput.value = this.rule.toString(10);
-        const rs = this.rule.toString(10);
-        this.ruleDisplay.textContent = `Rule ${rs.length > 8 ? rs.substring(0, 8) + '...' : rs}`;
 
         this.sizeSlider.value = this.cellSize;
         this.sizeDisplay.textContent = `${this.cellSize}px`;
@@ -273,7 +292,6 @@ class CellularAutomata {
             btn.className = `scale-btn flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all ${active ? 'bg-white/10 text-white shadow-sm' : 'text-surface-500 hover:text-white'}`;
         });
         
-        this.updateRuleVisualizer();
         this.setRule(this.rule);
     }
 
@@ -294,22 +312,87 @@ class CellularAutomata {
             }
         });
         this.btnRandomRule.addEventListener('click', () => {
-            const bitCount = 1 << (2 * this.radius + 1);
-            let randomRule = 0n;
-            if (bitCount <= 32) {
-                randomRule = BigInt(Math.floor(Math.random() * (2 ** bitCount)));
-            } else {
-                let hex = '0x';
-                for (let i = 0; i < bitCount / 4; i++) hex += Math.floor(Math.random() * 16).toString(16);
-                randomRule = BigInt(hex);
+            if (this.isSearching) return;
+            this.isSearching = true;
+
+            const icon = this.btnRandomRule.querySelector('i, svg');
+            if (icon) icon.classList.add('animate-spin');
+            this.btnRandomRule.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const minC = parseFloat(this.minComplexityInput.value);
+            const maxC = parseFloat(this.maxComplexityInput.value);
+            const maxAttempts = parseInt(this.maxAttemptsInput.value) || 100;
+            const isMaxVolMode = this.maxVolatilityToggle ? this.maxVolatilityToggle.checked : false;
+            const checkStability = this.ignoreStableToggle ? this.ignoreStableToggle.checked : false;
+
+            let attempts = 0;
+            let bestRule = null;
+            let maxVolatilityFound = -1;
+            let closestRule = this.rule;
+            let closestDist = Infinity;
+
+            const searchChunk = () => {
+                const chunkSize = 25; // Try 25 rules per chunk
+                for (let i = 0; i < chunkSize && attempts < maxAttempts; i++) {
+                    const trialRule = this.generateRandomRuleValue();
+                    // Using a "shadow" evaluation that doesn't touch the main instance grid
+                    const metrics = this.evaluateRuleMetrics(trialRule, this.radius, 128, 64, checkStability);
+                    const comp = metrics.complexity;
+                    const vol = metrics.volatility;
+
+                    if (comp >= minC && comp <= maxC) {
+                        if (isMaxVolMode) {
+                            if (vol > maxVolatilityFound) {
+                                maxVolatilityFound = vol;
+                                bestRule = trialRule;
+                            }
+                        } else {
+                            bestRule = trialRule;
+                            attempts = maxAttempts; 
+                            break;
+                        }
+                    }
+
+                    const dist = Math.min(Math.abs(comp - minC), Math.abs(comp - maxC));
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                        closestRule = trialRule;
+                    }
+                    attempts++;
+                }
+
+                if (attempts < maxAttempts) {
+                    setTimeout(searchChunk, 5); // Short gap for UI to breathe
+                } else {
+                    const finalRule = bestRule !== null ? bestRule : closestRule;
+                    this.setRule(finalRule);
+                    this.resizeAndReset();
+                    this.fillScreen();
+                    
+                    this.isSearching = false;
+                    if (icon) icon.classList.remove('animate-spin');
+                    this.btnRandomRule.classList.remove('opacity-50', 'cursor-not-allowed');
+                    // Only play if it was already playing or autoPlay is on
+                    if (this.autoPlay) this.play();
+                }
+            };
+
+            searchChunk();
+        });
+
+        this.minComplexityInput.addEventListener('input', (e) => {
+            this.minCompDisplay.textContent = `${e.target.value}%`;
+            if (parseFloat(e.target.value) > parseFloat(this.maxComplexityInput.value)) {
+                this.maxComplexityInput.value = e.target.value;
+                this.maxCompDisplay.textContent = `${e.target.value}%`;
             }
-            this.ruleInput.value = randomRule.toString();
-            this.setRule(randomRule);
-            if (this.instantFill) {
-                this.pause();
-                this.resizeAndReset();
-                this.fillScreen();
-                if (this.autoPlay) this.play();
+        });
+
+        this.maxComplexityInput.addEventListener('input', (e) => {
+            this.maxCompDisplay.textContent = `${e.target.value}%`;
+            if (parseFloat(e.target.value) < parseFloat(this.minComplexityInput.value)) {
+                this.minComplexityInput.value = e.target.value;
+                this.minCompDisplay.textContent = `${e.target.value}%`;
             }
         });
         this.resetOnChangeToggle.addEventListener('change', (e) => this.resetOnRuleChange = e.target.checked);
@@ -365,12 +448,56 @@ class CellularAutomata {
             this.waitTime = parseFloat(e.target.value);
             this.waitDisplay.textContent = `${this.waitTime.toFixed(1)}s`;
         });
+
+        if (this.btnCopyMap) {
+            this.btnCopyMap.addEventListener('click', () => {
+                const bitCount = 1 << (2 * this.radius + 1);
+                let map = "";
+                for (let i = 0; i < bitCount; i++) {
+                    const pattern = i.toString(2).padStart(2 * this.radius + 1, '0');
+                    const res = (this.rule >> BigInt(i)) & 1n;
+                    map += `${pattern}:${res};\n`;
+                }
+                navigator.clipboard.writeText(map).then(() => {
+                    const icon = this.btnCopyMap.querySelector('i, svg');
+                    const originalHTML = this.btnCopyMap.innerHTML;
+                    this.btnCopyMap.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-emerald-400"></i><span>Copied!</span>';
+                    lucide.createIcons();
+                    setTimeout(() => {
+                        this.btnCopyMap.innerHTML = originalHTML;
+                        lucide.createIcons();
+                    }, 2000);
+                });
+            });
+        }
+
+        if (this.btnCopyRule) {
+            this.btnCopyRule.addEventListener('click', () => {
+                const val = this.ruleInput.value;
+                navigator.clipboard.writeText(val).then(() => {
+                    const icon = this.btnCopyRule.querySelector('i, svg');
+                    const originalHTML = this.btnCopyRule.innerHTML;
+                    this.btnCopyRule.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>';
+                    lucide.createIcons();
+                    setTimeout(() => {
+                        this.btnCopyRule.innerHTML = originalHTML;
+                        lucide.createIcons();
+                    }, 2000);
+                });
+            });
+        }
         this.sizeSlider.addEventListener('change', (e) => {
             this.cellSize = parseInt(e.target.value);
             this.sizeDisplay.textContent = `${this.cellSize}px`;
             this.pause();
             this.resizeAndReset();
         });
+        if (this.maxWidthInput) {
+            this.maxWidthInput.addEventListener('input', (e) => {
+                this.pause();
+                this.resizeAndReset();
+            });
+        }
         this.colorAliveInput.addEventListener('input', (e) => { this.colorAlive = e.target.value; this.updateRuleVisualizer(); this.draw(); });
         this.colorDeadInput.addEventListener('input', (e) => { this.colorDead = e.target.value; this.updateRuleVisualizer(); this.draw(); });
         this.initCenterBtn.addEventListener('click', () => {
@@ -408,6 +535,13 @@ class CellularAutomata {
             this.draw();
         });
         this.xyPropagationToggle.addEventListener('change', (e) => this.xyPropagation = e.target.checked);
+        this.maxAttemptsInput.addEventListener('change', (e) => this.updateUrlDebounced());
+        
+        this.statsModeToggle.addEventListener('change', (e) => {
+            this.stats.toggle(e.target.checked);
+            this.pause();
+            this.resizeAndReset();
+        });
         this.edgeWrapToggle.addEventListener('change', (e) => this.edgeWrap = e.target.checked);
  
         this.scaleBtns.forEach(btn => {
@@ -594,43 +728,46 @@ class CellularAutomata {
         const bitCount = 1 << (2 * this.radius + 1);
         this.ruleTable = new Uint8Array(bitCount);
         const rs = this.rule.toString();
-        this.ruleDisplay.textContent = `Rule ${rs.length > 8 ? rs.substring(0, 8) + '...' : rs}`;
+        this.ruleInput.value = rs;
         for (let i = 0; i < bitCount; i++) this.ruleTable[i] = Number((this.rule >> BigInt(i)) & 1n);
-        if (this.radius === 1) { this.ruleVisualizer.parentElement.classList.remove('hidden'); this.updateRuleVisualizer(); }
-        else { this.ruleVisualizer.parentElement.classList.add('hidden'); }
+        
+        if (this.logicStats) {
+            this.logicStats.textContent = `R${this.radius}: ${bitCount} Bits`;
+        }
+        
+        if (this.stats) this.stats.updateMetadata(this.calculateLambda(), this.radius);
+
         if (this.resetOnRuleChange) { this.pause(); this.resizeAndReset(); }
     }
 
-    updateRuleVisualizer() {
-        this.ruleVisualizer.innerHTML = '';
-        for (let i = 7; i >= 0; i--) {
-            const l = (i >> 2) & 1, c = (i >> 1) & 1, r = i & 1, res = (this.rule >> BigInt(i)) & 1n;
-            const col = document.createElement('div'); col.className = 'flex flex-col items-center gap-1.5 flex-1 max-w-[28px]';
-            const topRow = document.createElement('div'); topRow.className = 'flex gap-[1px]';
-            [l, c, r].forEach(v => {
-                const cell = document.createElement('div'); cell.className = 'w-1.5 h-1.5 rounded-[1px]';
-                cell.style.backgroundColor = v ? this.colorAlive : 'transparent';
-                cell.style.border = v ? 'none' : '1px solid rgba(255,255,255,0.1)';
-                topRow.appendChild(cell);
-            });
-            const rc = document.createElement('div'); rc.className = 'w-1.5 h-1.5 rounded-[1px] mt-0.5';
-            rc.style.backgroundColor = res ? this.colorAlive : 'transparent';
-            rc.style.border = res ? 'none' : '1px solid rgba(255,255,255,0.1)';
-            col.appendChild(topRow); col.appendChild(rc); this.ruleVisualizer.appendChild(col);
-        }
+    calculateLambda() {
+        if (!this.ruleTable) return 0;
+        let ones = 0;
+        for (let val of this.ruleTable) if (val === 1) ones++;
+        return ones / this.ruleTable.length;
     }
 
     resizeAndReset() {
         const rect = this.container.getBoundingClientRect();
-        this.canvas.width = rect.width * this.renderScale;
-        this.canvas.height = rect.height * this.renderScale;
         
-        // Ensure CSS size matches container
-        this.canvas.style.width = `${rect.width}px`;
-        this.canvas.style.height = `${rect.height}px`;
+        let targetCols = Math.ceil(rect.width * this.renderScale / this.cellSize);
+        if (this.maxWidthInput) {
+            const maxW = parseInt(this.maxWidthInput.value);
+            if (!isNaN(maxW) && maxW > 0) {
+                targetCols = Math.min(targetCols, maxW);
+            }
+        }
 
-        this.cols = Math.ceil(this.canvas.width / this.cellSize);
-        this.rows = Math.ceil(this.canvas.height / this.cellSize);
+        this.cols = targetCols;
+        this.rows = Math.ceil(rect.height * this.renderScale / this.cellSize);
+
+        this.canvas.width = this.cols * this.cellSize;
+        this.canvas.height = this.rows * this.cellSize;
+        
+        // Match CSS size to actual grid to allow centering
+        this.canvas.style.width = `${this.canvas.width / this.renderScale}px`;
+        this.canvas.style.height = `${this.canvas.height / this.renderScale}px`;
+
         this.resetGrid();
     }
 
@@ -644,14 +781,19 @@ class CellularAutomata {
         // Ensure initial state isn't inside a wall
         for (let i = 0; i < this.cols; i++) if (this.walls[0][i]) this.grid[0][i] = 0;
 
+        if (this.stats) this.stats.reset();
+        this.lastComplexity = undefined;
+        this.lastDensity = undefined;
         this.updateStats(); this.draw();
     }
 
     fillScreen() { for (let i = 0; i < this.rows - 1; i++) this.generateNextRow(); this.draw(); }
+    
     updateStats() { 
         this.statsDisplay.querySelector('span').textContent = `GEN: ${this.totalGenerations}`;
         if (this.statsDisplayMobile) this.statsDisplayMobile.textContent = `G:${this.totalGenerations}`;
-        const rawComplexity = this.calculateComplexity();
+        const metrics = this.calculateComplexity();
+        const rawComplexity = metrics.complexity;
         
         // Exponential Moving Average for stability (alpha = 0.1)
         if (this.totalGenerations === 1) this.smoothedComplexity = rawComplexity;
@@ -660,8 +802,53 @@ class CellularAutomata {
         this.complexityValue.textContent = `${this.smoothedComplexity.toFixed(1)}%`;
     }
 
-    calculateComplexity() {
-        const row = this.grid[this.gridPointer];
+    calculateAverageMetrics(includeStability = false) {
+        let totalComp = 0;
+        let totalVol = 0;
+        const sampleSize = Math.min(this.rows, 50);
+        const step = Math.max(1, Math.floor(this.rows / sampleSize));
+        let count = 0;
+        
+        // Reset metrics for consistent volatility calculation in sampling
+        this.lastComplexity = undefined;
+        this.lastDensity = undefined;
+
+        for (let i = 0; i < this.rows; i += step) {
+            const m = this.calculateComplexity(i, false, includeStability);
+            totalComp += m.complexity;
+            totalVol += m.volatility;
+            count++;
+        }
+        return { 
+            complexity: count > 0 ? totalComp / count : 0,
+            volatility: count > 0 ? totalVol / count : 0
+        };
+    }
+
+    calculatePeriodicity() {
+        const currentRow = this.grid[this.gridPointer];
+        const n = this.rows;
+        const cols = this.cols;
+        const maxCheck = Math.min(n - 1, 50); // Check up to 50 previous rows
+        
+        for (let d = 1; d <= maxCheck; d++) {
+            const prevIdx = (this.gridPointer - d + n) % n;
+            const prevRow = this.grid[prevIdx];
+            
+            let match = true;
+            for (let i = 0; i < cols; i++) {
+                if (currentRow[i] !== prevRow[i]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) return d;
+        }
+        return 0;
+    }
+
+    calculateComplexity(rowIdx = this.gridPointer, updateStats = true, includeStability = true) {
+        const row = this.grid[rowIdx];
         if (!row || this.cols < 5) return 0;
 
         // Using 5-bit blocks for "advanced" spatial entropy (32 patterns)
@@ -688,33 +875,175 @@ class CellularAutomata {
         }
 
         // Normalize to 0-100% (max entropy for 5 bits is 5)
-        return (entropy / 5) * 100;
+        let complexity = (entropy / 5) * 100;
+        
+        // Detect periodicity (temporal stability)
+        let stability = 0;
+        let period = 0;
+        if (includeStability) {
+            period = this.calculatePeriodicity();
+            if (period > 0) {
+                stability = (1 / period) * 100;
+                // Discount complexity based on stability
+                complexity *= (1 - (1 / period));
+            }
+        }
+        
+        const totalCount = n;
+        let activeCount = 0;
+        for (let i = 0; i < n; i++) if (row[i] === 1) activeCount++;
+        
+        const ratio = (activeCount / totalCount) * 100;
+        
+        // Calculate Volatility (Dynamism)
+        let volatility = 0;
+        if (this.lastComplexity !== undefined && this.lastDensity !== undefined) {
+            // Volatility is the sum of absolute changes in metrics
+            volatility = Math.abs(complexity - this.lastComplexity) + Math.abs(ratio - this.lastDensity);
+        }
+        this.lastComplexity = complexity;
+        this.lastDensity = ratio;
+
+        // Estimate Lyapunov Exponent (Sensitivity)
+        let lyapunov = 0;
+        if (updateStats) {
+            lyapunov = this.calculateLyapunov();
+        }
+
+        // Update stats engine if active
+        if (updateStats && this.stats && this.stats.isActive) {
+            this.stats.addData(this.totalGenerations, complexity, activeCount, totalCount, stability, period, volatility, lyapunov);
+        }
+
+        return { complexity, volatility, ratio, activeCount, totalCount, stability, period, lyapunov };
     }
 
-    generateNextRow() {
-        if (this.rows === 0) return;
-        const prevRow = this.grid[this.gridPointer];
-        this.gridPointer = (this.gridPointer + 1) % this.rows;
-        const nextRow = this.grid[this.gridPointer];
-        if (!nextRow) return;
-        const cols = this.cols, ruleTable = this.ruleTable, radius = this.radius;
-        const currentWalls = this.walls[this.gridPointer];
+    generateRandomRuleValue() {
+        const bitCount = 1 << (2 * this.radius + 1);
+        if (bitCount <= 32) return BigInt(Math.floor(Math.random() * (2 ** bitCount)));
+        let hex = '0x';
+        for (let i = 0; i < bitCount / 4; i++) hex += Math.floor(Math.random() * 16).toString(16);
+        return BigInt(hex);
+    }
 
-        // 1. Calculate base next row
-        const baseNextRow = new Uint8Array(cols);
+    evaluateRuleMetrics(rule, radius, cols, rows, checkStability) {
+        // Pure function to evaluate a rule without affecting main state
+        const bitCount = 1 << (2 * radius + 1);
+        const ruleTable = new Uint8Array(bitCount);
+        for (let i = 0; i < bitCount; i++) ruleTable[i] = Number((rule >> BigInt(i)) & 1n);
+
+        const grid = Array.from({ length: rows }, () => new Uint8Array(cols));
+        // Seed center
+        grid[0][Math.floor(cols / 2)] = 1;
+        // Or random seed? Let's use random for better metrics
+        for (let i = 0; i < cols; i++) if (Math.random() > 0.5) grid[0][i] = 1;
+
+        // Simulate
+        for (let r = 1; r < rows; r++) {
+            const prev = grid[r - 1];
+            const next = grid[r];
+            if (radius === 1) {
+                for (let i = 0; i < cols; i++) {
+                    const l = (i === 0) ? 0 : prev[i - 1];
+                    const c = prev[i];
+                    const r_val = (i === cols - 1) ? 0 : prev[i + 1];
+                    next[i] = ruleTable[(l << 2) | (c << 1) | r_val];
+                }
+            } else {
+                for (let i = 0; i < cols; i++) {
+                    let w = 0;
+                    for (let d = -radius; d <= radius; d++) {
+                        const idx = i + d;
+                        w = (w << 1) | ((idx >= 0 && idx < cols) ? prev[idx] : 0);
+                    }
+                    next[i] = ruleTable[w];
+                }
+            }
+        }
+
+        // Analyze last 20 rows
+        let totalComp = 0;
+        let totalVol = 0;
+        let lastC = undefined;
+        let lastD = undefined;
+        let count = 0;
+
+        for (let r = rows - 20; r < rows; r++) {
+            const row = grid[r];
+            // Simple entropy (3-bit for speed in search)
+            const patternCounts = new Array(8).fill(0);
+            let active = 0;
+            for (let i = 0; i < cols; i++) {
+                const p = ((row[(i - 1 + cols) % cols] << 2) | (row[i] << 1) | row[(i + 1) % cols]);
+                patternCounts[p]++;
+                if (row[i]) active++;
+            }
+            let entropy = 0;
+            for (let c of patternCounts) if (c > 0) { const p = c / cols; entropy -= p * Math.log2(p); }
+            let comp = (entropy / 3) * 100;
+
+            // Stability check (simplified)
+            if (checkStability) {
+                let p = 0;
+                for (let prevR = 1; prevR <= 10; prevR++) {
+                    let match = true;
+                    for (let i = 0; i < cols; i++) if (grid[r - prevR][i] !== row[i]) { match = false; break; }
+                    if (match) { p = prevR; break; }
+                }
+                if (p > 0) comp *= (1 - (1 / p));
+            }
+
+            const dens = (active / cols) * 100;
+            let vol = 0;
+            if (lastC !== undefined) vol = Math.abs(comp - lastC) + Math.abs(dens - lastD);
+            lastC = comp; lastD = dens;
+
+            totalComp += comp;
+            totalVol += vol;
+            count++;
+        }
+
+        return { complexity: totalComp / count, volatility: totalVol / count };
+    }
+
+    calculateLyapunov() {
+        const row = this.grid[this.gridPointer];
+        const n = this.cols;
+        if (n < 10) return 0;
+        
+        // Shadow row with one bit flipped
+        const shadow = new Uint8Array(row);
+        const mid = Math.floor(n / 2);
+        shadow[mid] = 1 - shadow[mid];
+        
+        const nextOrig = this.applyRuleToRow(row);
+        const nextShadow = this.applyRuleToRow(shadow);
+        
+        let diffs = 0;
+        for (let i = 0; i < n; i++) if (nextOrig[i] !== nextShadow[i]) diffs++;
+        
+        return diffs; // Rate of damage spread
+    }
+
+    applyRuleToRow(row) {
+        const cols = this.cols;
+        const next = new Uint8Array(cols);
+        const ruleTable = this.ruleTable;
+        const radius = this.radius;
+        
         if (radius === 1) {
             for (let i = 0; i < cols; i++) {
                 let l, c, r;
                 if (this.edgeWrap) {
-                    l = prevRow[(i - 1 + cols) % cols];
-                    c = prevRow[i];
-                    r = prevRow[(i + 1) % cols];
+                    l = row[(i - 1 + cols) % cols];
+                    c = row[i];
+                    r = row[(i + 1) % cols];
                 } else {
-                    l = (i === 0) ? 0 : prevRow[i - 1];
-                    c = prevRow[i];
-                    r = (i === cols - 1) ? 0 : prevRow[i + 1];
+                    l = (i === 0) ? 0 : row[i - 1];
+                    c = row[i];
+                    r = (i === cols - 1) ? 0 : row[i + 1];
                 }
-                baseNextRow[i] = ruleTable[(l << 2) | (c << 1) | r];
+                next[i] = ruleTable[(l << 2) | (c << 1) | r];
             }
         } else {
             const mask = (1 << (2 * radius + 1)) - 1;
@@ -723,16 +1052,29 @@ class CellularAutomata {
                 for (let d = -radius; d <= radius; d++) {
                     let val = 0;
                     if (this.edgeWrap) {
-                        val = prevRow[(i + d + cols) % cols];
+                        val = row[(i + d + cols) % cols];
                     } else {
                         const idx = i + d;
-                        val = (idx >= 0 && idx < cols) ? prevRow[idx] : 0;
+                        val = (idx >= 0 && idx < cols) ? row[idx] : 0;
                     }
                     w = (w << 1) | val;
                 }
-                baseNextRow[i] = ruleTable[w];
+                next[i] = ruleTable[w];
             }
         }
+        return next;
+    }
+
+    generateNextRow() {
+        if (this.rows === 0) return;
+        const prevRow = this.grid[this.gridPointer];
+        this.gridPointer = (this.gridPointer + 1) % this.rows;
+        const nextRow = this.grid[this.gridPointer];
+        if (!nextRow) return;
+        
+        const baseNextRow = this.applyRuleToRow(prevRow);
+        const currentWalls = this.walls[this.gridPointer];
+        const cols = this.cols;
 
         // 2. Apply walls and X-Y Propagation
         nextRow.fill(0);

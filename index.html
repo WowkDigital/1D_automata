@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Automata. | 1D Cellular Automata</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -15,8 +15,10 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
     <!-- Custom Styles -->
     <link rel="stylesheet" href="styles.css">
 
@@ -49,46 +51,62 @@
 
     <!-- Ambient Background -->
     <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div class="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-brand-500/10 blur-[120px] rounded-full animate-pulse-slow"></div>
-        <div class="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-purple-500/5 blur-[120px] rounded-full animate-pulse-slow" style="animation-delay: 2s"></div>
+        <div
+            class="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-brand-500/10 blur-[120px] rounded-full animate-pulse-slow">
+        </div>
+        <div class="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-purple-500/5 blur-[120px] rounded-full animate-pulse-slow"
+            style="animation-delay: 2s"></div>
         <div class="absolute inset-0 bg-grid"></div>
     </div>
 
     <!-- Top Navigation Bar -->
-    <header class="w-full h-16 glass-panel z-30 flex items-center justify-between px-6 border-b border-white/5 relative">
+    <header
+        class="w-full h-16 glass-panel z-30 flex items-center justify-between px-6 border-b border-white/5 relative">
         <!-- Logo & Brand -->
         <div class="flex items-center gap-4 group">
-            <button id="btnMobileMenu" class="md:hidden w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white active:scale-90 transition-all border border-white/10">
+            <button id="btnMobileMenu"
+                class="md:hidden w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white active:scale-90 transition-all border border-white/10">
                 <i data-lucide="menu" class="w-6 h-6"></i>
             </button>
-            <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:rotate-12 transition-transform duration-300">
+            <div
+                class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:rotate-12 transition-transform duration-300">
                 <i data-lucide="grid-3x3" class="text-white w-5 h-5"></i>
             </div>
             <div class="hidden sm:block">
-                <h1 class="text-lg font-bold text-white tracking-tight leading-none">Automata<span class="text-brand-500">.</span></h1>
+                <h1 class="text-lg font-bold text-white tracking-tight leading-none">Automata<span
+                        class="text-brand-500">.</span></h1>
             </div>
         </div>
 
         <!-- Simulation Controls -->
         <div class="flex items-center gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5">
-            <button id="btnPlay" class="w-10 h-10 bg-brand-500 hover:bg-brand-400 text-white rounded-xl flex items-center justify-center transition-all duration-300 btn-glow shadow-lg shadow-brand-500/20 active:scale-90" title="Play / Pause (Space)">
+            <button id="btnPlay"
+                class="w-10 h-10 bg-brand-500 hover:bg-brand-400 text-white rounded-xl flex items-center justify-center transition-all duration-300 btn-glow shadow-lg shadow-brand-500/20 active:scale-90"
+                title="Play / Pause (Space)">
                 <i data-lucide="play" class="w-5 h-5 fill-current"></i>
             </button>
-            <button id="btnStep" class="w-10 h-10 bg-white/5 hover:bg-white/10 text-white rounded-xl flex items-center justify-center transition-all duration-300 border border-white/10 active:scale-90" title="Step (S)">
+            <button id="btnStep"
+                class="w-10 h-10 bg-white/5 hover:bg-white/10 text-white rounded-xl flex items-center justify-center transition-all duration-300 border border-white/10 active:scale-90"
+                title="Step (S)">
                 <i data-lucide="skip-forward" class="w-5 h-5"></i>
             </button>
             <div class="w-px h-6 bg-white/10 mx-1"></div>
-            <button id="btnReset" class="w-10 h-10 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl flex items-center justify-center transition-all duration-300 border border-red-500/20 active:scale-90" title="Reset Evolution (R)">
+            <button id="btnReset"
+                class="w-10 h-10 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl flex items-center justify-center transition-all duration-300 border border-red-500/20 active:scale-90"
+                title="Reset Evolution (R)">
                 <i data-lucide="refresh-cw" class="w-5 h-5"></i>
             </button>
         </div>
 
         <!-- Secondary Actions (Desktop) -->
         <div class="hidden sm:flex items-center gap-4">
-            <button id="btnShare" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-surface-500 hover:text-white transition-all duration-300 border border-white/5" title="Copy Configuration Link">
+            <button id="btnShare"
+                class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-surface-500 hover:text-white transition-all duration-300 border border-white/5"
+                title="Copy Configuration Link">
                 <i data-lucide="share-2" class="w-4 h-4"></i>
             </button>
-            <div id="statsDisplay" class="hidden md:flex gap-6 text-[10px] font-mono text-surface-400 uppercase tracking-widest">
+            <div id="statsDisplay"
+                class="hidden md:flex gap-6 text-[10px] font-mono text-surface-400 uppercase tracking-widest">
                 <div class="flex items-center gap-2">
                     <span class="w-1 h-1 rounded-full bg-brand-500"></span>
                     <span>GEN: 0</span>
@@ -98,11 +116,13 @@
                     <span id="complexityValue">0%</span>
                 </div>
             </div>
-            <a href="https://github.com/WowkDigital/1D_automata" target="_blank" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-surface-500 hover:text-white transition-all duration-300 border border-white/5" title="View Source on GitHub">
+            <a href="https://github.com/WowkDigital/1D_automata" target="_blank"
+                class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-surface-500 hover:text-white transition-all duration-300 border border-white/5"
+                title="View Source on GitHub">
                 <i data-lucide="github" class="w-5 h-5"></i>
             </a>
         </div>
-        
+
         <!-- Mobile Actions -->
         <div class="flex sm:hidden items-center gap-2">
             <div id="statsDisplayMobile" class="text-[10px] font-mono text-brand-500 uppercase font-bold px-2">
@@ -113,26 +133,30 @@
 
     <div class="flex flex-1 overflow-hidden relative">
         <!-- Sidebar -->
-        <aside id="sidebar" class="fixed inset-y-0 left-0 w-80 md:relative md:w-80 lg:w-80 h-full glass-panel z-40 flex flex-col shadow-2xl transition-transform duration-300 -translate-x-full md:translate-x-0 border-r border-white/5 overflow-hidden">
+        <aside id="sidebar"
+            class="fixed inset-y-0 left-0 w-80 md:relative md:w-80 lg:w-80 h-full glass-panel z-40 flex flex-col shadow-2xl transition-transform duration-300 -translate-x-full md:translate-x-0 border-r border-white/5 overflow-hidden">
             <!-- Sidebar Header for Mobile -->
             <div class="flex md:hidden items-center justify-between p-6 border-b border-white/5 bg-white/[0.02]">
                 <div class="flex items-center gap-3">
                     <span class="text-xs font-bold text-white tracking-widest uppercase">Controls</span>
                     <div class="flex items-center gap-2">
-                        <button id="btnShareMobile" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-surface-400 hover:text-white transition-colors border border-white/10">
+                        <button id="btnShareMobile"
+                            class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-surface-400 hover:text-white transition-colors border border-white/10">
                             <i data-lucide="share-2" class="w-4 h-4"></i>
                         </button>
-                        <a href="https://github.com/WowkDigital/1D_automata" target="_blank" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-surface-400 hover:text-white transition-colors border border-white/10">
+                        <a href="https://github.com/WowkDigital/1D_automata" target="_blank"
+                            class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-surface-400 hover:text-white transition-colors border border-white/10">
                             <i data-lucide="github" class="w-4 h-4"></i>
                         </a>
                     </div>
                 </div>
-                <button id="btnCloseSidebar" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-surface-400 active:scale-90 transition-all border border-white/10">
+                <button id="btnCloseSidebar"
+                    class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-surface-400 active:scale-90 transition-all border border-white/10">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
             <div class="p-6 flex flex-col gap-6 overflow-y-auto h-full scroll-smooth custom-scrollbar">
-                
+
                 <!-- GROUP 1: CELLULAR LOGIC -->
                 <div class="space-y-3">
                     <div class="flex items-center gap-2 px-1">
@@ -143,36 +167,94 @@
                         <!-- Presets -->
                         <div class="p-4 bg-white/[0.02]">
                             <div class="relative">
-                                <select id="presetRules" class="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-2.5 text-surface-200 focus:outline-none focus:border-brand-500 transition-all cursor-pointer appearance-none text-sm font-medium">
+                                <select id="presetRules"
+                                    class="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-2.5 text-surface-200 focus:outline-none focus:border-brand-500 transition-all cursor-pointer appearance-none text-sm font-medium">
                                     <option value="" class="bg-surface-900">Explore Presets...</option>
                                 </select>
-                                <div class="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 pointer-events-none"><i data-lucide="chevron-down" class="w-4 h-4"></i></div>
+                                <div
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 pointer-events-none">
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i></div>
                             </div>
                         </div>
-                        
+
                         <!-- Rule Definition -->
-                        <div class="p-4 space-y-3">
+                        <div class="p-4 space-y-4">
                             <div class="flex justify-between items-center">
-                                <span id="ruleDisplay" class="text-[10px] font-mono bg-brand-500/10 text-brand-400 px-2 py-0.5 rounded-full border border-brand-500/20">Rule 30</span>
+                                <span class="text-[9px] text-surface-500 uppercase tracking-widest font-bold">Simulation Rule</span>
                                 <div class="flex gap-4">
-                                    <label class="flex items-center gap-2 cursor-pointer group" title="New random rule on every scan">
-                                        <span class="text-[9px] text-surface-500 group-hover:text-surface-300 transition-colors uppercase tracking-widest font-bold">Auto</span>
-                                        <input type="checkbox" id="autoRandomToggle" class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                                    <label class="flex items-center gap-2 cursor-pointer group"
+                                        title="New random rule on every scan">
+                                        <span
+                                            class="text-[9px] text-surface-500 group-hover:text-surface-300 transition-colors uppercase tracking-widest font-bold">Auto</span>
+                                        <input type="checkbox" id="autoRandomToggle"
+                                            class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
                                     </label>
-                                    <label class="flex items-center gap-2 cursor-pointer group" title="Reset simulation when rule changes">
-                                        <span class="text-[9px] text-surface-500 group-hover:text-surface-300 transition-colors uppercase tracking-widest font-bold">Reset</span>
-                                        <input type="checkbox" id="resetOnChange" class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                                    <label class="flex items-center gap-2 cursor-pointer group"
+                                        title="Reset simulation when rule changes">
+                                        <span
+                                            class="text-[9px] text-surface-500 group-hover:text-surface-300 transition-colors uppercase tracking-widest font-bold">Reset</span>
+                                        <input type="checkbox" id="resetOnChange"
+                                            class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
                                     </label>
                                 </div>
                             </div>
-                            <div class="flex gap-2">
-                                <div class="relative flex-1">
-                                    <input type="text" id="ruleInput" value="30" class="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-500 transition-all font-mono text-base text-center appearance-none">
-                                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500"><i data-lucide="hash" class="w-4 h-4"></i></div>
+                            
+                            <div class="relative group">
+                                <input type="text" id="ruleInput" value="30"
+                                    class="w-full bg-black/40 border border-white/10 rounded-xl px-12 py-3 text-white focus:outline-none focus:border-brand-500 transition-all font-mono text-lg text-center appearance-none shadow-inner group-hover:border-white/20">
+                                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-500/50">
+                                    <i data-lucide="hash" class="w-5 h-5"></i>
                                 </div>
-                                <button id="btnRandomRule" class="px-4 bg-black/20 hover:bg-white/10 text-brand-400 border border-white/5 rounded-xl transition-all active:scale-95 flex items-center justify-center group" title="Generate Random Rule">
-                                    <i data-lucide="shuffle" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+                                <button id="btnCopyRule" 
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-white/5 text-surface-400 hover:bg-brand-500/20 hover:text-brand-400 transition-all"
+                                    title="Copy to clipboard">
+                                    <i data-lucide="copy" class="w-4 h-4"></i>
                                 </button>
+                            </div>
+
+                            <button id="btnRandomRule"
+                                class="w-full py-3 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/20 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 group font-bold text-xs uppercase tracking-widest"
+                                title="Generate Random Rule">
+                                <i data-lucide="shuffle" class="w-4 h-4 group-hover:rotate-45 transition-transform"></i>
+                                <span>Generate Random Rule</span>
+                            </button>
+                            <div class="flex items-center gap-3 pt-2">
+                                <div class="flex-1 space-y-1">
+                                    <div class="flex justify-between">
+                                        <span class="text-[9px] text-surface-500 uppercase tracking-widest font-bold">Min Comp.</span>
+                                        <span id="minCompDisplay" class="text-[9px] text-brand-500 font-mono">40%</span>
+                                    </div>
+                                    <input type="range" id="minComplexity" min="0" max="100" value="40" class="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-brand-500">
+                                </div>
+                                <div class="flex-1 space-y-1">
+                                    <div class="flex justify-between">
+                                        <span class="text-[9px] text-surface-500 uppercase tracking-widest font-bold">Max Comp.</span>
+                                        <span id="maxCompDisplay" class="text-[9px] text-brand-500 font-mono">90%</span>
+                                    </div>
+                                    <input type="range" id="maxComplexity" min="0" max="100" value="90" class="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-brand-500">
+                                </div>
+                            </div>
+                            <div class="pt-3 px-1">
+                                <div class="flex items-center justify-between border-t border-white/5 pt-2">
+                                    <span class="text-[9px] text-surface-500 uppercase tracking-widest font-bold">Search Limit</span>
+                                    <select id="maxAttempts" class="bg-transparent text-[9px] text-brand-500 font-mono focus:outline-none cursor-pointer text-right hover:text-brand-400 transition-colors">
+                                        <option value="100" class="bg-surface-900">100 Iterations</option>
+                                        <option value="1000" class="bg-surface-900">1000 Iterations</option>
+                                        <option value="5000" class="bg-surface-900">5000 Iterations</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center justify-between pt-2">
+                                    <span class="text-[9px] text-surface-500 uppercase tracking-widest font-bold">Ignore Stable</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="ignoreStableToggle" class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all" checked>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between pt-2">
+                                    <span class="text-[9px] text-surface-500 uppercase tracking-widest font-bold">Max Volatility</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="maxVolatilityToggle" class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
@@ -180,10 +262,18 @@
                         <div class="p-4 flex items-center justify-between">
                             <span class="text-[11px] font-semibold text-surface-300">Neighborhood Radius</span>
                             <div class="flex p-1 bg-black/20 rounded-lg border border-white/5" id="advancedControls">
-                                <button class="radius-btn px-3 py-2 md:py-1 rounded text-[10px] font-bold transition-all bg-white/10 text-white" data-radius="1">R1</button>
-                                <button class="radius-btn px-3 py-2 md:py-1 rounded text-[10px] font-bold transition-all text-surface-500 hover:text-white" data-radius="2">R2</button>
-                                <button class="radius-btn px-3 py-2 md:py-1 rounded text-[10px] font-bold transition-all text-surface-500 hover:text-white" data-radius="3">R3</button>
-                                <button class="radius-btn px-3 py-2 md:py-1 rounded text-[10px] font-bold transition-all text-surface-500 hover:text-white" data-radius="4">R4</button>
+                                <button
+                                    class="radius-btn px-3 py-2 md:py-1 rounded text-[10px] font-bold transition-all bg-white/10 text-white"
+                                    data-radius="1">R1</button>
+                                <button
+                                    class="radius-btn px-3 py-2 md:py-1 rounded text-[10px] font-bold transition-all text-surface-500 hover:text-white"
+                                    data-radius="2">R2</button>
+                                <button
+                                    class="radius-btn px-3 py-2 md:py-1 rounded text-[10px] font-bold transition-all text-surface-500 hover:text-white"
+                                    data-radius="3">R3</button>
+                                <button
+                                    class="radius-btn px-3 py-2 md:py-1 rounded text-[10px] font-bold transition-all text-surface-500 hover:text-white"
+                                    data-radius="4">R4</button>
                             </div>
                         </div>
 
@@ -192,30 +282,54 @@
                             <div class="flex justify-between items-center">
                                 <span class="text-[11px] font-semibold text-surface-300">Initial Seed</span>
                                 <div class="flex gap-3">
-                                    <label class="flex items-center gap-1.5 cursor-pointer group" title="Auto-Play on Instant Fill">
-                                        <span class="text-[9px] text-surface-500 group-hover:text-surface-300 transition-colors uppercase tracking-widest font-bold">Auto-Play</span>
-                                        <input type="checkbox" id="autoPlayToggle" class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                                    <label class="flex items-center gap-1.5 cursor-pointer group"
+                                        title="Auto-Play on Instant Fill">
+                                        <span
+                                            class="text-[9px] text-surface-500 group-hover:text-surface-300 transition-colors uppercase tracking-widest font-bold">Auto-Play</span>
+                                        <input type="checkbox" id="autoPlayToggle"
+                                            class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
                                     </label>
-                                    <label class="flex items-center gap-1.5 cursor-pointer group" title="Fill entire screen instantly">
-                                        <span class="text-[9px] text-surface-500 group-hover:text-surface-300 transition-colors uppercase tracking-widest font-bold">Instant Fill</span>
-                                        <input type="checkbox" id="instantFillToggle" class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                                    <label class="flex items-center gap-1.5 cursor-pointer group"
+                                        title="Fill entire screen instantly">
+                                        <span
+                                            class="text-[9px] text-surface-500 group-hover:text-surface-300 transition-colors uppercase tracking-widest font-bold">Instant
+                                            Fill</span>
+                                        <input type="checkbox" id="instantFillToggle"
+                                            class="w-3.5 h-3.5 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
                                     </label>
                                 </div>
                             </div>
                             <div class="flex p-1 bg-black/20 rounded-xl border border-white/5">
-                                <button id="initCenter" class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 bg-white/10 text-white shadow-sm">1 PIXEL</button>
-                                <button id="initRandom" class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 text-surface-500 hover:text-white">RANDOM</button>
+                                <button id="initCenter"
+                                    class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 bg-white/10 text-white shadow-sm">1
+                                    PIXEL</button>
+                                <button id="initRandom"
+                                    class="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 text-surface-500 hover:text-white">RANDOM</button>
                             </div>
                         </div>
 
-                        <!-- Logic Map -->
-                        <div class="p-4 bg-black/40">
-                            <div class="flex justify-between gap-1" id="ruleVisualizer"></div>
+                <!-- GROUP 2: LOGIC EXPLORER -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between px-1">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="microscope" class="w-4 h-4 text-brand-500"></i>
+                            <h2 class="text-xs font-bold text-white uppercase tracking-[0.2em]">Logic Explorer</h2>
+                        </div>
+                        <span id="logicStats" class="text-[9px] font-mono text-surface-500">R1: 8 Bits</span>
+                    </div>
+                    <div class="bg-white/5 rounded-2xl border border-white/5 overflow-hidden">
+                        <div class="p-4 bg-black/40 flex flex-col gap-3">
+                            <button id="btnCopyMap" 
+                                class="w-full py-3 bg-white/5 hover:bg-white/10 text-white border border-white/5 rounded-xl transition-all flex items-center justify-center gap-2 group font-bold text-[10px] uppercase tracking-widest">
+                                <i data-lucide="clipboard-copy" class="w-4 h-4 text-brand-500"></i>
+                                <span>Copy Transformation Map</span>
+                            </button>
+                            <p class="text-[8px] text-surface-500 text-center uppercase tracking-wider">Format: Binary Pattern : Result;</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- GROUP 2: SIMULATION RULES -->
+                <!-- GROUP 3: PHYSICS & ENGINE -->
                 <div class="space-y-3">
                     <div class="flex items-center gap-2 px-1">
                         <i data-lucide="settings-2" class="w-4 h-4 text-brand-500"></i>
@@ -229,8 +343,10 @@
                                 <span class="text-[11px] font-semibold text-surface-200">Render Mode</span>
                             </div>
                             <div class="flex p-1 bg-black/20 rounded-lg border border-white/5 w-32">
-                                <button id="modeScroll" class="flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white">SCROLL</button>
-                                <button id="modeScan" class="flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white">SCAN</button>
+                                <button id="modeScroll"
+                                    class="flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white">SCROLL</button>
+                                <button id="modeScan"
+                                    class="flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white">SCAN</button>
                             </div>
                         </div>
 
@@ -241,7 +357,9 @@
                                 <span class="text-[11px] font-semibold text-surface-200">Edge Wrap</span>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="edgeWrapToggle" class="w-4 h-4 accent-amber-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all" checked>
+                                <input type="checkbox" id="edgeWrapToggle"
+                                    class="w-4 h-4 accent-amber-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all"
+                                    checked>
                             </label>
                         </div>
 
@@ -252,7 +370,8 @@
                                 <span class="text-[11px] font-semibold text-surface-200">X-Y Flow</span>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="xyPropagationToggle" class="w-4 h-4 accent-indigo-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                                <input type="checkbox" id="xyPropagationToggle"
+                                    class="w-4 h-4 accent-indigo-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
                             </label>
                         </div>
 
@@ -263,8 +382,10 @@
                                 <span class="text-[11px] font-semibold text-surface-200">Entropy Guard</span>
                             </div>
                             <div class="flex p-1 bg-black/20 rounded-lg border border-white/5 w-24">
-                                <button id="entropyGuardOff" class="flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white">OFF</button>
-                                <button id="entropyGuardOn" class="flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white">ON</button>
+                                <button id="entropyGuardOff"
+                                    class="flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white">OFF</button>
+                                <button id="entropyGuardOn"
+                                    class="flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white">ON</button>
                             </div>
                         </div>
 
@@ -277,11 +398,13 @@
                                         <span class="text-[11px] font-semibold text-surface-200">Scan Delay</span>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="waitToggle" class="w-4 h-4 accent-blue-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                                        <input type="checkbox" id="waitToggle"
+                                            class="w-4 h-4 accent-blue-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
                                     </label>
                                 </div>
                                 <div id="waitSettings" class="mt-3 space-y-2">
-                                    <input type="range" id="waitSlider" min="0.5" max="10" step="0.5" value="2" class="w-full accent-blue-500">
+                                    <input type="range" id="waitSlider" min="0.5" max="10" step="0.5" value="2"
+                                        class="w-full accent-blue-500">
                                     <div class="flex justify-end">
                                         <span id="waitDisplay" class="text-[10px] font-mono text-blue-400">2.0s</span>
                                     </div>
@@ -302,38 +425,59 @@
                         <div class="p-4 space-y-4">
                             <div class="space-y-2">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-[10px] font-medium text-surface-400 uppercase tracking-widest">Tempo</span>
+                                    <span
+                                        class="text-[10px] font-medium text-surface-400 uppercase tracking-widest">Tempo</span>
                                     <span id="speedDisplay" class="text-[10px] font-mono text-white">60 fps</span>
                                 </div>
                                 <input type="range" id="speedSlider" min="1" max="300" value="60" class="w-full">
                             </div>
                             <div class="space-y-2">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-[10px] font-medium text-surface-400 uppercase tracking-widest">Resolution</span>
+                                    <span
+                                        class="text-[10px] font-medium text-surface-400 uppercase tracking-widest">Resolution</span>
                                     <span id="sizeDisplay" class="text-[10px] font-mono text-white">4px</span>
                                 </div>
                                 <input type="range" id="sizeSlider" min="1" max="20" value="4" class="w-full">
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] font-medium text-surface-400 uppercase tracking-widest">Max Width (Cells)</span>
+                                </div>
+                                <input type="number" id="maxWidthInput" placeholder="Auto (Full width)" min="1"
+                                    class="w-full bg-black/20 border border-white/5 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500 appearance-none font-mono">
                             </div>
                         </div>
 
                         <!-- Internal Scale -->
                         <div class="p-4 space-y-2 border-t border-white/5">
                             <div class="flex justify-between items-center">
-                                <span class="text-[10px] font-medium text-surface-400 uppercase tracking-widest">Internal Scale</span>
-                                <span class="text-[9px] text-brand-500 font-bold px-1.5 py-0.5 bg-brand-500/10 rounded">BETA</span>
+                                <span
+                                    class="text-[10px] font-medium text-surface-400 uppercase tracking-widest">Internal
+                                    Scale</span>
+                                <span
+                                    class="text-[9px] text-brand-500 font-bold px-1.5 py-0.5 bg-brand-500/10 rounded">BETA</span>
                             </div>
                             <div class="flex p-1 bg-black/20 rounded-lg border border-white/5" id="scaleControls">
-                                <button class="scale-btn flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white" data-scale="1">1X</button>
-                                <button class="scale-btn flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white" data-scale="2">2X</button>
-                                <button class="scale-btn flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white" data-scale="4">4X</button>
+                                <button
+                                    class="scale-btn flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white"
+                                    data-scale="1">1X</button>
+                                <button
+                                    class="scale-btn flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white"
+                                    data-scale="2">2X</button>
+                                <button
+                                    class="scale-btn flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white"
+                                    data-scale="4">4X</button>
                             </div>
                         </div>
 
                         <!-- Coloring Mode -->
                         <div class="p-4 space-y-4">
                             <div class="space-y-2">
-                                <span class="text-[10px] font-medium text-surface-400 uppercase tracking-widest block">Color Mode</span>
-                                <select id="colorMode" class="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-2 text-surface-200 focus:outline-none focus:border-brand-500 transition-all cursor-pointer appearance-none text-xs">
+                                <span
+                                    class="text-[10px] font-medium text-surface-400 uppercase tracking-widest block">Color
+                                    Mode</span>
+                                <select id="colorMode"
+                                    class="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-2 text-surface-200 focus:outline-none focus:border-brand-500 transition-all cursor-pointer appearance-none text-xs">
                                     <option value="solid" class="bg-surface-900">Solid (Standard)</option>
                                     <option value="neighbors" class="bg-surface-900">Neighborhood Density</option>
                                     <option value="column" class="bg-surface-900">Column History</option>
@@ -342,7 +486,8 @@
                             </div>
                             <div class="space-y-2">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-[10px] font-medium text-surface-400 uppercase tracking-widest">Intensity</span>
+                                    <span
+                                        class="text-[10px] font-medium text-surface-400 uppercase tracking-widest">Intensity</span>
                                     <span id="intensityDisplay" class="text-[10px] font-mono text-white">100%</span>
                                 </div>
                                 <input type="range" id="intensitySlider" min="10" max="100" value="100" class="w-full">
@@ -352,12 +497,16 @@
                         <!-- Palette -->
                         <div class="p-4 grid grid-cols-2 gap-3">
                             <div class="flex items-center gap-3 p-2 bg-black/20 rounded-xl border border-white/5">
-                                <input type="color" id="colorAlive" value="#14b8a6" class="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0">
-                                <span class="text-[9px] text-surface-400 font-bold uppercase tracking-widest">Active</span>
+                                <input type="color" id="colorAlive" value="#14b8a6"
+                                    class="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0">
+                                <span
+                                    class="text-[9px] text-surface-400 font-bold uppercase tracking-widest">Active</span>
                             </div>
                             <div class="flex items-center gap-3 p-2 bg-black/20 rounded-xl border border-white/5">
-                                <input type="color" id="colorDead" value="#0a0a0a" class="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0">
-                                <span class="text-[9px] text-surface-400 font-bold uppercase tracking-widest">Void</span>
+                                <input type="color" id="colorDead" value="#0a0a0a"
+                                    class="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0">
+                                <span
+                                    class="text-[9px] text-surface-400 font-bold uppercase tracking-widest">Void</span>
                             </div>
                         </div>
                     </div>
@@ -370,12 +519,34 @@
                         <h2 class="text-xs font-bold text-white uppercase tracking-[0.2em]">Obstacles</h2>
                     </div>
                     <div class="bg-white/5 rounded-2xl border border-white/5 p-4 flex gap-3">
-                        <button id="btnDrawWall" class="flex-1 bg-black/20 hover:bg-white/10 text-white font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-white/5 active:scale-95 text-[10px]">
+                        <button id="btnDrawWall"
+                            class="flex-1 bg-black/20 hover:bg-white/10 text-white font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-white/5 active:scale-95 text-[10px]">
                             <i data-lucide="pencil" class="w-3.5 h-3.5 text-brand-500"></i> <span>Draw Walls</span>
                         </button>
-                        <button id="btnClearWalls" class="flex-1 bg-black/20 hover:bg-white/10 text-white font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-white/5 active:scale-95 text-[10px]">
+                        <button id="btnClearWalls"
+                            class="flex-1 bg-black/20 hover:bg-white/10 text-white font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 border border-white/5 active:scale-95 text-[10px]">
                             <i data-lucide="eraser" class="w-3.5 h-3.5 text-red-500"></i> <span>Clear</span>
                         </button>
+                    </div>
+                </div>
+
+                <!-- GROUP 5: ANALYSIS -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2 px-1">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-brand-500"></i>
+                        <h2 class="text-xs font-bold text-white uppercase tracking-[0.2em]">Analysis</h2>
+                    </div>
+                    <div class="bg-white/5 rounded-2xl border border-white/5 p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="layout-panel-top" class="w-4 h-4 text-brand-400"></i>
+                                <span class="text-[11px] font-semibold text-surface-200">Statistical Mode</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="statsModeToggle"
+                                    class="w-4 h-4 accent-brand-500 bg-white/10 border-white/5 rounded cursor-pointer transition-all">
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -385,24 +556,34 @@
         </aside>
 
         <!-- Sidebar Overlay for Mobile -->
-        <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 opacity-0 pointer-events-none transition-opacity duration-300 md:hidden"></div>
+        <div id="sidebarOverlay"
+            class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 opacity-0 pointer-events-none transition-opacity duration-300 md:hidden">
+        </div>
 
         <!-- Main Workspace -->
-        <main class="flex-1 relative flex items-center justify-center overflow-hidden z-0" id="canvasContainer">
-            <div class="relative group w-full h-full flex items-center justify-center">
-                <div class="absolute inset-0 bg-gradient-to-r from-brand-500 to-purple-500 blur opacity-10 group-hover:opacity-20 transition duration-1000 group-hover:duration-200"></div>
-                <canvas id="caCanvas" class="relative bg-surface-950 max-w-full max-h-full"></canvas>
-                
-                <!-- Progress Bar for Waiting -->
-                <div id="waitProgressBarContainer" class="absolute bottom-0 left-0 right-0 h-1 bg-white/5 overflow-hidden opacity-0 transition-opacity duration-300">
-                    <div id="waitProgressBar" class="h-full bg-brand-500 w-0 transition-[width] duration-100 ease-linear"></div>
+        <main class="flex-1 relative flex flex-col items-center justify-center overflow-hidden z-0" id="canvasContainer">
+            <div id="animationArea" class="flex-1 w-full h-full relative group flex items-center justify-center overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-r from-brand-500 to-purple-500 blur opacity-10 group-hover:opacity-20 transition duration-1000 group-hover:duration-200">
                 </div>
+                <canvas id="caCanvas" class="relative bg-surface-950 max-w-full max-h-full"></canvas>
+
+                <!-- Progress Bar for Waiting -->
+                <div id="waitProgressBarContainer"
+                    class="absolute bottom-0 left-0 right-0 h-1 bg-white/5 overflow-hidden opacity-0 transition-opacity duration-300">
+                    <div id="waitProgressBar"
+                        class="h-full bg-brand-500 w-0 transition-[width] duration-100 ease-linear"></div>
+                </div>
+            </div>
+            
+            <div id="statsArea" class="hidden w-full h-1/2 border-t border-white/5 bg-black/40 backdrop-blur-xl p-6 overflow-hidden">
             </div>
         </main>
     </div>
 
     <!-- Application Core -->
     <script src="presets.js"></script>
+    <script src="stats.js"></script>
     <script src="app.js"></script>
 
     <!-- Footer Initialization -->
