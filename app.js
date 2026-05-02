@@ -49,13 +49,10 @@ class CellularAutomata {
         this.waitDisplay = document.getElementById('waitDisplay');
         this.waitProgressBarContainer = document.getElementById('waitProgressBarContainer');
         this.waitProgressBar = document.getElementById('waitProgressBar');
-        this.btnDrawWall = document.getElementById('btnDrawWall');
-        this.btnClearWalls = document.getElementById('btnClearWalls');
         this.btnShare = document.getElementById('btnShare');
         this.btnShareMobile = document.getElementById('btnShareMobile');
         this.statsDisplayMobile = document.getElementById('statsDisplayMobile');
         this.sidebar = document.getElementById('sidebar');
-        this.xyPropagationToggle = document.getElementById('xyPropagationToggle');
         this.edgeWrapToggle = document.getElementById('edgeWrapToggle');
         this.scaleControls = document.getElementById('scaleControls');
         this.scaleBtns = document.querySelectorAll('.scale-btn');
@@ -107,10 +104,7 @@ class CellularAutomata {
         this.cols = 0;
         this.rows = 0;
         this.grid = [];
-        this.walls = [];
         this.gridPointer = 0;
-        this.isDrawingWalls = false;
-        this.xyPropagation = false;
         this.edgeWrap = true;
         this.totalGenerations = 0;
         this.isRunning = false;
@@ -159,7 +153,6 @@ class CellularAutomata {
         if (this.autoPlay) flags |= 16;
         if (this.autoRandom) flags |= 32;
         if (this.waitBetweenScans) flags |= 64;
-        if (this.xyPropagation) flags |= 128;
         if (this.edgeWrap) flags |= 256;
 
         const colorModes = ['solid', 'neighbors', 'column', 'row'];
@@ -202,7 +195,6 @@ class CellularAutomata {
             this.autoPlay = !!(flags & 16);
             this.autoRandom = !!(flags & 32);
             this.waitBetweenScans = !!(flags & 64);
-            this.xyPropagation = !!(flags & 128);
             this.edgeWrap = !!(flags & 256);
 
             const colorModes = ['solid', 'neighbors', 'column', 'row'];
@@ -250,7 +242,6 @@ class CellularAutomata {
         if (this.autoPlayToggle) this.autoPlayToggle.checked = this.autoPlay;
         this.waitToggle.checked = this.waitBetweenScans;
         if (this.waitSettings) this.waitSettings.classList.toggle('hidden', !this.waitBetweenScans);
-        this.xyPropagationToggle.checked = this.xyPropagation;
         this.edgeWrapToggle.checked = this.edgeWrap;
 
         if (this.entropyGuardEnabled) {
@@ -520,21 +511,6 @@ class CellularAutomata {
                 if (this.autoPlay) this.play();
             }
         });
-        this.btnDrawWall.addEventListener('click', () => {
-            this.isDrawingWalls = !this.isDrawingWalls;
-            this.btnDrawWall.classList.toggle('bg-brand-500/20', this.isDrawingWalls);
-            this.btnDrawWall.classList.toggle('border-brand-500/50', this.isDrawingWalls);
-            this.canvas.style.cursor = this.isDrawingWalls ? 'crosshair' : 'default';
-            
-            if (this.isDrawingWalls && !this.isScanMode) {
-                this.setScanMode(true);
-            }
-        });
-        this.btnClearWalls.addEventListener('click', () => {
-            for (let y = 0; y < this.rows; y++) this.walls[y].fill(0);
-            this.draw();
-        });
-        this.xyPropagationToggle.addEventListener('change', (e) => this.xyPropagation = e.target.checked);
         this.maxAttemptsInput.addEventListener('change', (e) => this.updateUrlDebounced());
         
         this.statsModeToggle.addEventListener('change', (e) => {
@@ -556,11 +532,6 @@ class CellularAutomata {
             });
         });
  
-        this.canvas.addEventListener('mousedown', (e) => {
-            if (!this.isDrawingWalls) return;
-            this.isPainting = true;
-            this.paintWall(e);
-        });
         this.canvas.addEventListener('mousemove', (e) => {
             if (this.isPainting) this.paintWall(e);
         });
@@ -571,12 +542,6 @@ class CellularAutomata {
         });
 
         // Touch events for mobile wall drawing
-        this.canvas.addEventListener('touchstart', (e) => {
-            if (!this.isDrawingWalls) return;
-            e.preventDefault();
-            this.isPainting = true;
-            this.paintWall(e.touches[0]);
-        }, { passive: false });
 
         this.canvas.addEventListener('touchmove', (e) => {
             if (this.isPainting) {
@@ -652,43 +617,6 @@ class CellularAutomata {
         }
     }
 
-    paintWall(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
-        const x = Math.floor(((e.clientX - rect.left) * scaleX) / this.cellSize);
-        const y = Math.floor(((e.clientY - rect.top) * scaleY) / this.cellSize);
-        
-        if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
-            if (!this.isScanMode) this.setScanMode(true);
-            
-            const val = e.shiftKey ? 0 : 1;
-            
-            if (this.lastX !== undefined && this.lastY !== undefined) {
-                // Line interpolation (Bresenham's)
-                let dx = Math.abs(x - this.lastX), dy = Math.abs(y - this.lastY);
-                let sx = (this.lastX < x) ? 1 : -1, sy = (this.lastY < y) ? 1 : -1;
-                let err = dx - dy;
-                let lx = this.lastX, ly = this.lastY;
-                
-                while (true) {
-                    if (lx >= 0 && lx < this.cols && ly >= 0 && ly < this.rows) {
-                        this.walls[ly][lx] = val;
-                    }
-                    if (lx === x && ly === y) break;
-                    let e2 = 2 * err;
-                    if (e2 > -dy) { err -= dy; lx += sx; }
-                    if (e2 < dx) { err += dx; ly += sy; }
-                }
-            } else {
-                this.walls[y][x] = val;
-            }
-            
-            this.lastX = x;
-            this.lastY = y;
-            this.draw();
-        }
-    }
 
     setScanMode(isScan) {
         this.isScanMode = isScan;
@@ -773,13 +701,10 @@ class CellularAutomata {
 
     resetGrid() {
         this.grid = Array.from({ length: this.rows }, () => new Uint8Array(this.cols));
-        this.walls = Array.from({ length: this.rows }, () => new Uint8Array(this.cols));
         this.gridPointer = 0; this.totalGenerations = 1;
         if (this.initialMode === 'center') this.grid[0][Math.floor(this.cols / 2)] = 1;
         else for (let i = 0; i < this.cols; i++) this.grid[0][i] = Math.random() > 0.5 ? 1 : 0;
         
-        // Ensure initial state isn't inside a wall
-        for (let i = 0; i < this.cols; i++) if (this.walls[0][i]) this.grid[0][i] = 0;
 
         if (this.stats) this.stats.reset();
         this.lastComplexity = undefined;
@@ -1073,27 +998,7 @@ class CellularAutomata {
         if (!nextRow) return;
         
         const baseNextRow = this.applyRuleToRow(prevRow);
-        const currentWalls = this.walls[this.gridPointer];
-        const cols = this.cols;
-
-        // 2. Apply walls and X-Y Propagation
-        nextRow.fill(0);
-        for (let i = 0; i < cols; i++) {
-            if (baseNextRow[i] === 0) continue;
-
-            if (!currentWalls[i]) {
-                nextRow[i] = 1;
-            } else if (this.xyPropagation) {
-                // Life is blocked! Try to leak to the nearest available side
-                let found = false;
-                for (let d = 1; d < 10; d++) { // Search up to 10 cells away
-                    const left = (i - d + cols) % cols;
-                    const right = (i + d + cols) % cols;
-                    if (!currentWalls[left] && !nextRow[left]) { nextRow[left] = 1; found = true; break; }
-                    if (!currentWalls[right] && !nextRow[right]) { nextRow[right] = 1; found = true; break; }
-                }
-            }
-        }
+        nextRow.set(baseNextRow);
         if (this.entropyGuardEnabled) {
             let u = true; for (let i = 1; i < cols; i++) if (nextRow[i] !== nextRow[0]) { u = false; break; }
             if (u) for (let i = 0; i < cols; i++) nextRow[i] = Math.random() > 0.5 ? 1 : 0;
@@ -1174,7 +1079,6 @@ class CellularAutomata {
         if (this.isScanMode) {
             for (let i = 0; i < count; i++) {
                 this.drawRow(this.grid[i], i, i);
-                this.drawWalls(this.walls[i], i);
             }
             this.ctx.fillStyle = 'rgba(255,255,255,0.15)';
             this.ctx.fillRect(0, this.gridPointer * this.cellSize, this.canvas.width, Math.max(1, this.cellSize / 2));
@@ -1183,7 +1087,6 @@ class CellularAutomata {
             for (let i = 0; i < count; i++) { 
                 const idx = (sp + i) % this.rows; 
                 this.drawRow(this.grid[idx], i, idx); 
-                this.drawWalls(this.walls[idx], i);
             }
         }
     }
@@ -1213,11 +1116,9 @@ class CellularAutomata {
         if (this.isScanMode) {
             for (let y = 0; y < count; y++) {
                 const row = this.grid[y];
-                const walls = this.walls[y];
                 const offset = y * width;
                 for (let x = 0; x < width; x++) {
-                    if (walls[x]) data[offset + x] = colorWall32;
-                    else data[offset + x] = row[x] ? colorAlive32 : colorDead32;
+                    data[offset + x] = row[x] ? colorAlive32 : colorDead32;
                 }
             }
             // Scanner line
@@ -1228,11 +1129,9 @@ class CellularAutomata {
             for (let y = 0; y < count; y++) {
                 const idx = (sp + y) % this.rows;
                 const row = this.grid[idx];
-                const walls = this.walls[idx];
                 const offset = y * width;
                 for (let x = 0; x < width; x++) {
-                    if (walls[x]) data[offset + x] = colorWall32;
-                    else data[offset + x] = row[x] ? colorAlive32 : colorDead32;
+                    data[offset + x] = row[x] ? colorAlive32 : colorDead32;
                 }
             }
         }
@@ -1240,50 +1139,6 @@ class CellularAutomata {
         this.ctx.putImageData(this.cachedImageData, 0, 0);
     }
 
-    drawWalls(row, y) {
-        if (!row.some(v => v === 1)) return;
-        const cs = this.cellSize;
-        this.ctx.save();
-        
-        for (let x = 0; x < this.cols; x++) {
-            if (row[x]) {
-                const px = x * cs;
-                const py = y * cs;
-                
-                if (cs < 4) {
-                    // Simple fast path for high-res walls
-                    this.ctx.fillStyle = '#3f3f46';
-                    this.ctx.fillRect(px, py, cs, cs);
-                    continue;
-                }
-
-                // Wall Base with subtle gradient
-                const grad = this.ctx.createLinearGradient(px, py, px + cs, py + cs);
-                grad.addColorStop(0, '#3f3f46'); // zinc-700
-                grad.addColorStop(1, '#27272a'); // zinc-800
-                this.ctx.fillStyle = grad;
-                this.ctx.fillRect(px, py, cs, cs);
-                
-                // Highlight edges
-                this.ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-                this.ctx.lineWidth = 0.5;
-                this.ctx.strokeRect(px + 0.5, py + 0.5, cs - 1, cs - 1);
-                
-                // Inner "structural" detail for larger cells
-                if (cs >= 6) {
-                    this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                    this.ctx.fillRect(px + cs*0.2, py + cs*0.2, cs*0.6, cs*0.6);
-                    this.ctx.strokeStyle = 'rgba(161,161,170,0.2)'; // zinc-400
-                    this.ctx.strokeRect(px + cs*0.2, py + cs*0.2, cs*0.6, cs*0.6);
-                } else if (cs >= 3) {
-                    // Small dot for medium cells
-                    this.ctx.fillStyle = 'rgba(161,161,170,0.3)';
-                    this.ctx.fillRect(px + cs*0.3, py + cs*0.3, cs*0.4, cs*0.4);
-                }
-            }
-        }
-        this.ctx.restore();
-    }
 
     togglePlay() { if (this.isRunning) this.pause(); else this.play(); }
     play() {
