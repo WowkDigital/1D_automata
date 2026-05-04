@@ -6,6 +6,7 @@ class AutomataStats {
             activeRatio: [],
             stability: [],
             volatility: [],
+            activity: [],
             lyapunov: [],
             generations: []
         };
@@ -18,23 +19,29 @@ class AutomataStats {
 
     setupUI() {
         this.container.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 h-full w-full">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 h-full w-full">
                 <!-- Row 1 -->
-                <div class="bg-black/20 rounded-xl border border-white/5 p-3 flex flex-col lg:col-span-1">
+                <div class="bg-black/20 rounded-xl border border-white/5 p-3 flex flex-col">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-[9px] font-bold text-surface-400 uppercase tracking-widest">Spatial complexity</span>
-                        <span id="currentCompStat" class="text-[10px] font-mono text-brand-400">0%</span>
+                        <div class="flex flex-col items-end">
+                            <span id="currentCompStat" class="text-[10px] font-mono text-brand-400">0%</span>
+                            <span id="currentCompActivityStat" class="text-[8px] font-mono text-brand-500/60" title="Total Variation (Activity)">ACT: 0.0</span>
+                        </div>
                     </div>
                     <canvas id="complexityChart" class="flex-1 w-full"></canvas>
                 </div>
-                <div class="bg-black/20 rounded-xl border border-white/5 p-3 flex flex-col lg:col-span-1">
+                <div class="bg-black/20 rounded-xl border border-white/5 p-3 flex flex-col">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-[9px] font-bold text-surface-400 uppercase tracking-widest">Pixel Density</span>
-                        <span id="currentDensityStat" class="text-[10px] font-mono text-indigo-400">0%</span>
+                        <div class="flex flex-col items-end">
+                            <span id="currentDensityStat" class="text-[10px] font-mono text-indigo-400">0%</span>
+                            <span id="currentDensityActivityStat" class="text-[8px] font-mono text-indigo-500/60" title="Total Variation (Activity)">ACT: 0.0</span>
+                        </div>
                     </div>
                     <canvas id="densityChart" class="flex-1 w-full"></canvas>
                 </div>
-                <div class="bg-black/20 rounded-xl border border-white/5 p-3 flex flex-col lg:col-span-1">
+                <div class="bg-black/20 rounded-xl border border-white/5 p-3 flex flex-col">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-[9px] font-bold text-surface-400 uppercase tracking-widest">Stability</span>
                         <div class="flex items-center gap-1">
@@ -44,9 +51,20 @@ class AutomataStats {
                     </div>
                     <canvas id="stabilityChart" class="flex-1 w-full"></canvas>
                 </div>
+
+                <div class="bg-black/20 rounded-xl border border-white/5 p-3 flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[9px] font-bold text-surface-400 uppercase tracking-widest">Activity Index (SMA)</span>
+                        <div class="flex flex-col items-end">
+                            <span id="currentActivityStat" class="text-[10px] font-mono text-cyan-400">0.0</span>
+                            <span class="text-[8px] font-mono text-cyan-500/60">AVG 500</span>
+                        </div>
+                    </div>
+                    <canvas id="activityChart" class="flex-1 w-full"></canvas>
+                </div>
                 
-                <!-- Row 2 (or continued) -->
-                <div class="bg-black/20 rounded-xl border border-white/5 p-3 flex flex-col lg:col-span-1">
+                <!-- Row 2 -->
+                <div class="bg-black/20 rounded-xl border border-white/5 p-3 flex flex-col">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-[9px] font-bold text-surface-400 uppercase tracking-widest">Volatility</span>
                         <div class="flex flex-col items-end">
@@ -56,7 +74,7 @@ class AutomataStats {
                     </div>
                     <canvas id="volatilityChart" class="flex-1 w-full"></canvas>
                 </div>
-                <div class="bg-black/20 rounded-xl border border-white/5 p-3 flex flex-col lg:col-span-1">
+                <div class="bg-black/20 rounded-xl border border-white/5 p-3 flex flex-col">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-[9px] font-bold text-surface-400 uppercase tracking-widest">Lyapunov Exp.</span>
                         <span id="currentLyapunovStat" class="text-[10px] font-mono text-emerald-400">0.00</span>
@@ -65,34 +83,39 @@ class AutomataStats {
                 </div>
                 
                 <!-- Rule Props / Metadata -->
-                <div class="bg-brand-500/5 rounded-xl border border-brand-500/10 p-3 flex flex-col justify-between lg:col-span-1">
+                <div class="bg-brand-500/5 rounded-xl border border-brand-500/10 p-3 flex flex-col justify-between lg:col-span-2">
                     <div class="space-y-3">
                         <span class="text-[9px] font-bold text-brand-400 uppercase tracking-widest block">Rule Analysis</span>
-                        <div class="space-y-2">
-                            <div class="flex justify-between">
-                                <span class="text-[9px] text-surface-500 uppercase">Langton's λ</span>
-                                <span id="lambdaStat" class="text-[10px] font-mono text-white">0.000</span>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-[9px] text-surface-500 uppercase">Langton's λ</span>
+                                    <span id="lambdaStat" class="text-[10px] font-mono text-white">0.000</span>
+                                </div>
+                                <div id="lambdaIndicator" class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                    <div id="lambdaBar" class="h-full bg-brand-500 transition-all duration-500" style="width: 0%"></div>
+                                </div>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-[9px] text-surface-500 uppercase">Radius</span>
-                                <span id="radiusStat" class="text-[10px] font-mono text-white">1</span>
-                            </div>
-                             <div class="flex justify-between">
-                                <span class="text-[9px] text-surface-500 uppercase">Wolfram</span>
-                                <span id="wolframClass" class="text-[10px] font-mono text-brand-500 font-bold">Class ?</span>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-[9px] text-surface-500 uppercase">Radius</span>
+                                    <span id="radiusStat" class="text-[10px] font-mono text-white">1</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-[9px] text-surface-500 uppercase">Wolfram</span>
+                                    <span id="wolframClass" class="text-[10px] font-mono text-brand-500 font-bold">Class ?</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div id="lambdaIndicator" class="h-1.5 w-full bg-white/5 rounded-full mt-2 overflow-hidden">
-                        <div id="lambdaBar" class="h-full bg-brand-500 transition-all duration-500" style="width: 0%"></div>
-                    </div>
                 </div>
             </div>
-        `;
+        `;;
 
         this.charts.complexity = document.getElementById('complexityChart');
         this.charts.density = document.getElementById('densityChart');
         this.charts.stability = document.getElementById('stabilityChart');
+        this.charts.activity = document.getElementById('activityChart');
         this.charts.volatility = document.getElementById('volatilityChart');
         this.charts.lyapunov = document.getElementById('lyapunovChart');
         
@@ -122,6 +145,7 @@ class AutomataStats {
         this.history.activeRatio = [];
         this.history.stability = [];
         this.history.volatility = [];
+        this.history.activity = [];
         this.history.lyapunov = [];
         this.history.generations = [];
         this.draw();
@@ -154,11 +178,22 @@ class AutomataStats {
         this.history.lyapunov.push(lyapunov);
         this.history.generations.push(generation);
 
+        // Activity calculation (Mean Absolute Change over maxHistory)
+        if (this.history.volatility.length > 0) {
+            const avgVol = this.calculateSMA(this.history.volatility, this.maxHistory);
+            const currentAvgVol = avgVol[avgVol.length - 1];
+            this.history.activity.push(currentAvgVol);
+            document.getElementById('currentActivityStat').textContent = currentAvgVol.toFixed(1);
+        } else {
+            this.history.activity.push(0);
+        }
+
         if (this.history.complexity.length > this.maxHistory) {
             this.history.complexity.shift();
             this.history.activeRatio.shift();
             this.history.stability.shift();
             this.history.volatility.shift();
+            this.history.activity.shift();
             this.history.lyapunov.shift();
             this.history.generations.shift();
         }
@@ -174,6 +209,14 @@ class AutomataStats {
             const sma = this.calculateSMA(this.history.volatility, 300);
             const currentSMA = sma[sma.length - 1];
             document.getElementById('currentVolatilitySMAStat').textContent = `AVG: ${currentSMA.toFixed(1)}%`;
+        }
+
+        // Calculate Activity (Total Variation) for Complexity and Density
+        if (this.history.complexity.length > 1) {
+            const compAct = this.calculateTotalVariation(this.history.complexity);
+            const densAct = this.calculateTotalVariation(this.history.activeRatio);
+            document.getElementById('currentCompActivityStat').textContent = `ACT: ${compAct.toFixed(1)}`;
+            document.getElementById('currentDensityActivityStat').textContent = `ACT: ${densAct.toFixed(1)}`;
         }
 
         const indicator = document.getElementById('cycleIndicator');
@@ -192,6 +235,7 @@ class AutomataStats {
         this.drawChart(this.charts.complexity, this.history.complexity, '#14b8a6');
         this.drawChart(this.charts.density, this.history.activeRatio, '#6366f1');
         this.drawChart(this.charts.stability, this.history.stability, '#fbbf24');
+        this.drawChart(this.charts.activity, this.history.activity, '#22d3ee');
         this.drawChart(this.charts.volatility, this.history.volatility, '#f43f5e', true);
         this.drawChart(this.charts.lyapunov, this.history.lyapunov, '#10b981');
     }
@@ -207,6 +251,14 @@ class AutomataStats {
         return result;
     }
 
+    calculateTotalVariation(data) {
+        let total = 0;
+        for (let i = 1; i < data.length; i++) {
+            total += Math.abs(data[i] - data[i - 1]);
+        }
+        return total;
+    }
+
     drawChart(canvas, data, color, showSMA = false) {
         const ctx = canvas.getContext('2d');
         const w = canvas.width;
@@ -216,7 +268,12 @@ class AutomataStats {
         if (data.length < 2) return;
 
         const min = 0;
-        let max = (canvas.id === 'lyapunovChart') ? 2 : 100; // Lyapunov usually 0-2 range for CA
+        let max = 100;
+        if (canvas.id === 'lyapunovChart') max = 2;
+        if (canvas.id === 'activityChart') {
+            // Find max in activity history for better scaling
+            max = Math.max(10, ...data) * 1.2;
+        }
 
         // Draw raw data (thin line)
         ctx.strokeStyle = showSMA ? 'rgba(244, 63, 94, 0.3)' : color;
@@ -258,6 +315,7 @@ class AutomataStats {
         else if (color === '#fbbf24') rgba = 'rgba(251, 191, 36, 0.1)';
         else if (color === '#f43f5e') rgba = 'rgba(244, 63, 94, 0.1)';
         else if (color === '#10b981') rgba = 'rgba(16, 185, 129, 0.1)';
+        else if (color === '#22d3ee') rgba = 'rgba(34, 211, 238, 0.1)';
         
         ctx.fillStyle = gradient;
         gradient.addColorStop(0, rgba);
