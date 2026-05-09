@@ -2,13 +2,14 @@ class CellularAutomata {
     constructor() {
         this.canvas = document.getElementById('caCanvas');
         this.ctx = this.canvas.getContext('2d', { alpha: false });
-        this.container = document.getElementById('canvasContainer');
+        this.container = document.getElementById('animationArea');
 
         this.ruleInput = document.getElementById('ruleInput');
         this.btnCopyRule = document.getElementById('btnCopyRule');
         this.presetRules = document.getElementById('presetRules');
         this.statsDisplay = document.getElementById('statsDisplay');
         this.complexityValue = document.getElementById('complexityValue');
+        this.generationValue = document.getElementById('generationValue');
 
         this.btnPlay = document.getElementById('btnPlay');
         this.btnStep = document.getElementById('btnStep');
@@ -56,6 +57,10 @@ class CellularAutomata {
         this.edgeWrapToggle = document.getElementById('edgeWrapToggle');
         this.scaleControls = document.getElementById('scaleControls');
         this.scaleBtns = document.querySelectorAll('.scale-btn');
+        
+        this.shapeSquareBtn = document.getElementById('shapeSquare');
+        this.shapeHexBtn = document.getElementById('shapeHex');
+        this.isHexMode = false;
         
         this.btnMobileMenu = document.getElementById('btnMobileMenu');
         this.btnCloseSidebar = document.getElementById('btnCloseSidebar');
@@ -154,6 +159,7 @@ class CellularAutomata {
         if (this.autoRandom) flags |= 32;
         if (this.waitBetweenScans) flags |= 64;
         if (this.edgeWrap) flags |= 256;
+        if (this.isHexMode) flags |= 512;
 
         const colorModes = ['solid', 'neighbors', 'column', 'row'];
         const m = colorModes.indexOf(this.colorMode);
@@ -196,6 +202,7 @@ class CellularAutomata {
             this.autoRandom = !!(flags & 32);
             this.waitBetweenScans = !!(flags & 64);
             this.edgeWrap = !!(flags & 256);
+            this.isHexMode = !!(flags & 512);
 
             const colorModes = ['solid', 'neighbors', 'column', 'row'];
             this.colorMode = colorModes[parseInt(p[5])] || 'solid';
@@ -282,6 +289,14 @@ class CellularAutomata {
             const active = parseInt(btn.dataset.scale) === this.renderScale;
             btn.className = `scale-btn flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all ${active ? 'bg-white/10 text-white shadow-sm' : 'text-surface-500 hover:text-white'}`;
         });
+        
+        if (this.isHexMode) {
+            if(this.shapeHexBtn) this.shapeHexBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            if(this.shapeSquareBtn) this.shapeSquareBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
+        } else {
+            if(this.shapeSquareBtn) this.shapeSquareBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            if(this.shapeHexBtn) this.shapeHexBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
+        }
         
         this.setRule(this.rule);
     }
@@ -516,7 +531,8 @@ class CellularAutomata {
         this.statsModeToggle.addEventListener('change', (e) => {
             this.stats.toggle(e.target.checked);
             this.pause();
-            this.resizeAndReset();
+            // Wait for layout transition before resizing
+            setTimeout(() => this.resizeAndReset(), 100);
         });
         this.edgeWrapToggle.addEventListener('change', (e) => this.edgeWrap = e.target.checked);
  
@@ -600,6 +616,28 @@ class CellularAutomata {
         }
         if (this.sidebarOverlay) {
             this.sidebarOverlay.addEventListener('click', () => this.toggleSidebar(false));
+        }
+
+        if (this.shapeSquareBtn && this.shapeHexBtn) {
+            this.shapeSquareBtn.addEventListener('click', () => this.setCellShape(false));
+            this.shapeHexBtn.addEventListener('click', () => this.setCellShape(true));
+        }
+    }
+
+    setCellShape(isHex) {
+        this.isHexMode = isHex;
+        if (isHex) {
+            this.shapeHexBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.shapeSquareBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
+        } else {
+            this.shapeSquareBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all bg-white/10 text-white shadow-sm";
+            this.shapeHexBtn.className = "flex-1 py-2 md:py-1 rounded-lg text-[10px] font-bold transition-all text-surface-500 hover:text-white";
+        }
+        this.pause();
+        this.resizeAndReset();
+        if (this.instantFill) {
+            this.fillScreen();
+            if (this.autoPlay) this.play();
         }
     }
 
@@ -687,10 +725,15 @@ class CellularAutomata {
         }
 
         this.cols = targetCols;
-        this.rows = Math.ceil(rect.height * this.renderScale / this.cellSize);
+        if (this.isHexMode) {
+            const hexRadius = this.cellSize / Math.sqrt(3);
+            this.rows = Math.ceil(rect.height * this.renderScale / (hexRadius * 1.5)) + 1;
+        } else {
+            this.rows = Math.ceil(rect.height * this.renderScale / this.cellSize);
+        }
 
         this.canvas.width = this.cols * this.cellSize;
-        this.canvas.height = this.rows * this.cellSize;
+        this.canvas.height = this.rows * (this.isHexMode ? (this.cellSize / Math.sqrt(3)) * 1.5 : this.cellSize);
         
         // Match CSS size to actual grid to allow centering
         this.canvas.style.width = `${this.canvas.width / this.renderScale}px`;
@@ -715,7 +758,7 @@ class CellularAutomata {
     fillScreen() { for (let i = 0; i < this.rows - 1; i++) this.generateNextRow(); this.draw(); }
     
     updateStats() { 
-        this.statsDisplay.querySelector('span').textContent = `GEN: ${this.totalGenerations}`;
+        if (this.generationValue) this.generationValue.textContent = `GEN: ${this.totalGenerations}`;
         if (this.statsDisplayMobile) this.statsDisplayMobile.textContent = `G:${this.totalGenerations}`;
         const metrics = this.calculateComplexity();
         const rawComplexity = metrics.complexity;
@@ -1033,15 +1076,40 @@ class CellularAutomata {
 
     drawRow(row, y, gridIdx) {
         const cs = this.cellSize, cols = this.cols, mode = this.colorMode, baseI = this.intensity;
+        const isHex = this.isHexMode;
+        const hexRadius = cs / Math.sqrt(3);
+        const yOffset = isHex ? y * hexRadius * 1.5 : y * cs;
+        const xOffset = isHex ? (y % 2 !== 0 ? cs / 2 : 0) : 0;
+
         if (mode === 'solid') {
-            this.ctx.fillStyle = this.colorAlive; this.ctx.beginPath();
-            let xs = -1;
-            for (let x = 0; x < cols; x++) {
-                if (row[x] === 1) { if (xs === -1) xs = x; }
-                else if (xs !== -1) { this.ctx.rect(xs * cs, y * cs, (x - xs) * cs, cs); xs = -1; }
+            this.ctx.fillStyle = this.colorAlive; 
+            if (!isHex) {
+                this.ctx.beginPath();
+                let xs = -1;
+                for (let x = 0; x < cols; x++) {
+                    if (row[x] === 1) { if (xs === -1) xs = x; }
+                    else if (xs !== -1) { this.ctx.rect(xs * cs, y * cs, (x - xs) * cs, cs); xs = -1; }
+                }
+                if (xs !== -1) this.ctx.rect(xs * cs, y * cs, (cols - xs) * cs, cs);
+                this.ctx.fill();
+            } else {
+                this.ctx.beginPath();
+                for (let x = 0; x < cols; x++) {
+                    if (row[x] === 1) {
+                        const cx = x * cs + xOffset + cs/2;
+                        const cy = yOffset + hexRadius;
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (Math.PI / 3) * i - Math.PI / 6;
+                            const hx = cx + hexRadius * Math.cos(angle);
+                            const cy_h = cy + hexRadius * Math.sin(angle);
+                            if (i === 0) this.ctx.moveTo(hx, cy_h);
+                            else this.ctx.lineTo(hx, cy_h);
+                        }
+                        this.ctx.closePath();
+                    }
+                }
+                this.ctx.fill();
             }
-            if (xs !== -1) this.ctx.rect(xs * cs, y * cs, (cols - xs) * cs, cs);
-            this.ctx.fill();
         } else {
             for (let x = 0; x < cols; x++) {
                 if (row[x] === 0) continue;
@@ -1061,14 +1129,29 @@ class CellularAutomata {
                 }
                 this.ctx.globalAlpha = 0.15 + (f * 0.85 * baseI);
                 this.ctx.fillStyle = this.colorAlive;
-                this.ctx.fillRect(x * cs, y * cs, cs, cs);
+                if (!isHex) {
+                    this.ctx.fillRect(x * cs, y * cs, cs, cs);
+                } else {
+                    const cx = x * cs + xOffset + cs/2;
+                    const cy = yOffset + hexRadius;
+                    this.ctx.beginPath();
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (Math.PI / 3) * i - Math.PI / 6;
+                        const hx = cx + hexRadius * Math.cos(angle);
+                        const cy_h = cy + hexRadius * Math.sin(angle);
+                        if (i === 0) this.ctx.moveTo(hx, cy_h);
+                        else this.ctx.lineTo(hx, cy_h);
+                    }
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                }
             }
             this.ctx.globalAlpha = 1.0;
         }
     }
 
     draw() {
-        if (this.renderScale >= 2 && this.cellSize === 1 && this.colorMode === 'solid') {
+        if (!this.isHexMode && this.renderScale >= 2 && this.cellSize === 1 && this.colorMode === 'solid') {
             this.drawFast();
             return;
         }
@@ -1081,7 +1164,8 @@ class CellularAutomata {
                 this.drawRow(this.grid[i], i, i);
             }
             this.ctx.fillStyle = 'rgba(255,255,255,0.15)';
-            this.ctx.fillRect(0, this.gridPointer * this.cellSize, this.canvas.width, Math.max(1, this.cellSize / 2));
+            const yOffset = this.isHexMode ? this.gridPointer * (this.cellSize / Math.sqrt(3)) * 1.5 : this.gridPointer * this.cellSize;
+            this.ctx.fillRect(0, yOffset, this.canvas.width, Math.max(1, this.cellSize / 2));
         } else {
             const sp = (this.gridPointer - count + 1 + this.rows) % this.rows;
             for (let i = 0; i < count; i++) { 

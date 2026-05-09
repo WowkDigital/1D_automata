@@ -109,7 +109,7 @@
                 class="hidden md:flex gap-6 text-[10px] font-mono text-surface-400 uppercase tracking-widest">
                 <div class="flex items-center gap-2">
                     <span class="w-1 h-1 rounded-full bg-brand-500"></span>
-                    <span>GEN: 0</span>
+                    <span id="generationValue">GEN: 0</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-brand-400">COMPLEXITY:</span>
@@ -155,7 +155,7 @@
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <div class="p-6 flex flex-col gap-6 overflow-y-auto h-full scroll-smooth custom-scrollbar">
+            <div class="px-4 py-5 flex flex-col gap-8 overflow-y-auto h-full scroll-smooth custom-scrollbar">
 
                 <!-- GROUP 1: CELLULAR LOGIC -->
                 <div class="space-y-3">
@@ -309,7 +309,7 @@
                         </div>
 
                 <!-- GROUP 2: LOGIC EXPLORER -->
-                <div class="space-y-3">
+                <div class="space-y-3 mt-2">
                     <div class="flex items-center justify-between px-1">
                         <div class="flex items-center gap-2">
                             <i data-lucide="microscope" class="w-4 h-4 text-brand-500"></i>
@@ -330,7 +330,7 @@
                 </div>
 
                 <!-- GROUP 3: PHYSICS & ENGINE -->
-                <div class="space-y-3">
+                <div class="space-y-3 mt-2">
                     <div class="flex items-center gap-2 px-1">
                         <i data-lucide="settings-2" class="w-4 h-4 text-brand-500"></i>
                         <h2 class="text-xs font-bold text-white uppercase tracking-[0.2em]">Physics & Engine</h2>
@@ -347,6 +347,20 @@
                                     class="flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white">SCROLL</button>
                                 <button id="modeScan"
                                     class="flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white">SCAN</button>
+                            </div>
+                        </div>
+
+                        <!-- Cell Shape -->
+                        <div class="p-4 flex items-center justify-between border-t border-white/5">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="hexagon" class="w-4 h-4 text-purple-500"></i>
+                                <span class="text-[11px] font-semibold text-surface-200">Cell Shape</span>
+                            </div>
+                            <div class="flex p-1 bg-black/20 rounded-lg border border-white/5 w-32">
+                                <button id="shapeSquare"
+                                    class="flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all bg-white/10 text-white">SQUARE</button>
+                                <button id="shapeHex"
+                                    class="flex-1 py-2 md:py-1 rounded text-[9px] font-bold transition-all text-surface-500 hover:text-white">HEX</button>
                             </div>
                         </div>
 
@@ -404,7 +418,7 @@
                 </div>
 
                 <!-- GROUP 3: AESTHETICS & RENDER -->
-                <div class="space-y-3">
+                <div class="space-y-3 mt-2">
                     <div class="flex items-center gap-2 px-1">
                         <i data-lucide="palette" class="w-4 h-4 text-brand-500"></i>
                         <h2 class="text-xs font-bold text-white uppercase tracking-[0.2em]">Aesthetics</h2>
@@ -503,7 +517,7 @@
 
 
                 <!-- GROUP 5: ANALYSIS -->
-                <div class="space-y-3">
+                <div class="space-y-3 mt-2">
                     <div class="flex items-center gap-2 px-1">
                         <i data-lucide="bar-chart-3" class="w-4 h-4 text-brand-500"></i>
                         <h2 class="text-xs font-bold text-white uppercase tracking-[0.2em]">Analysis</h2>
